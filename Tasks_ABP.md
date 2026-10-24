@@ -1,7 +1,15 @@
-# KẾ HOẠCH PHÂN CÔNG DỰ ÁN: BÀI TOÁN ANTIBANDWIDTH (ABP) VỚI SAT SOLVER
-**Thời lượng thực hiện:** 3 tuần  
-**Thành viên:** Tường, Tùng, Lợi  
-**Mục tiêu:** Hoàn thiện mã nguồn giải thuật, báo cáo khoa học và slide/video thuyết trình với sự tham gia đồng đều của cả 3 thành viên ở cả 3 mảng công việc.
+# KẾ HOẠCH PHÂN CÔNG DỰ ÁN: BÀI TOÁN ANTIBANDWIDTH (ABP)
+## BÀI TẬP LỚN SỐ 2 - MÔN CÁC VẤN ĐỀ HIỆN ĐẠI KHMT (HK I 2026 - 2027)
+
+* **Topic 5:** Antibandwidth Problem (ABP)
+* **Thời lượng thực hiện:** 3 tuần
+* **Thành viên:** Tường, Tùng, Lợi
+* **Mục tiêu:** 
+  1. Cài đặt các phương pháp mã hóa SAT: **Pairwise (Direct) Encoding** và **Order Encoding** (có tối ưu ALO/AMO nâng cao).
+  2. Xây dựng mô hình giải chính xác đối chứng bằng **Constraint Programming (Google OR-Tools CP-SAT)** để so sánh hiệu năng với SAT.
+  3. Thực nghiệm đánh giá trên các ma trận có kích thước lớn từ tập chuẩn Harwell-Boeing.
+  4. Trực quan hóa dữ liệu và kết quả thực nghiệm bằng thư viện bắt buộc **`cnsplots`** (`https://cnsplots.farid.one/latest/`).
+  5. Xuất bản báo cáo khoa học theo đúng **Template LaTeX của nhà xuất bản Elsevier (`cas-sc`)** và đính kèm link GitHub Repository trong mục **"Data Availability"**.
 
 ---
 
@@ -9,94 +17,97 @@
 
 | Trụ cột | Tường | Tùng | Lợi |
 | :--- | :--- | :--- | :--- |
-| **1. Code & Thuật toán** | Tiền xử lý dữ liệu Harwell-Boeing + Module Direct Encoding (Hệ ràng buộc song ánh ALO/AMO). | Mã hóa ràng buộc khoảng cách $d \ge k$ + Thuật toán tìm kiếm tối ưu (Binary Search & Incremental SAT). | Tích hợp SAT Solver (Kissat/CaDiCaL) + Tối ưu Phá vỡ đối xứng (Symmetry Breaking) & Order Encoding / Đánh giá Benchmark. |
-| **2. Báo cáo (Report)** | Soạn Chương 1 & 2: Cơ sở lý thuyết ABP, tính NP-hard, ứng dụng thực tế. | Soạn Chương 3 & 4.1 - 4.2: Chuyển đổi bài toán tối ưu sang SAT, chi tiết Direct Encoding & Distance Clauses. | Soạn Chương 4.3 - 5: Kỹ thuật Symmetry Breaking, Order Encoding, tổng hợp số liệu thực nghiệm & kết luận. |
-| **3. Thuyết trình (Presentation)** | Thiết kế Slide Phần 1 (Đặt vấn đề, mô hình đồ thị, ứng dụng) + Thuyết trình Mở đầu (Tuần 3). | Thiết kế Slide Phần 2 (Mô hình hóa SAT, Direct Encoding, Binary Search) + Thuyết trình Kỹ thuật (Tuần 3). | Thiết kế Slide Phần 3 (Symmetry Breaking, Thực nghiệm Harwell-Boeing, Demo chạy mã nguồn) + Thuyết trình Kết luận (Tuần 3). |
+| **1. Code & Thuật toán** | - Parser đồ thị Harwell-Boeing.<br>- Bổ sung tập dữ liệu ma trận lớn.<br>- Bộ kiểm tra tính hợp lệ của nghiệm (Verifier). | - Direct Encoding (Pairwise).<br>- Tối ưu ALO/AMO nâng cao (Sequential Counter / Commander qua PySAT `CardEnc`).<br>- Xây dựng mô hình đối chuẩn **Google OR-Tools CP-SAT**. | - Pipeline SAT Solver (PySAT + Kissat/CaDiCaL).<br>- Kỹ thuật Phá vỡ đối xứng (Symmetry Breaking).<br>- Cài đặt **Order Encoding**.<br>- Trực quan hóa đồ thị & biểu đồ bằng **`cnsplots`**. |
+| **2. Báo cáo (Report)** | - Khởi tạo Template Elsevier (`cas-sc`).<br>- Soạn Chương 1 & 2 (Tổng quan bài toán, ứng dụng thực tế).<br>- Biên tập mục **Data Availability** (Link GitHub) & Abstract. | - Soạn Chương 3 & 4.1 - 4.2:<br>  + Chuyển đổi tối ưu sang SAT & mô hình CP-SAT.<br>  + Chi tiết các hệ ràng buộc ALO/AMO nâng cao & khoảng cách. | - Soạn Chương 4.3 - 5:<br>  + Cơ chế Symmetry Breaking & Order Encoding.<br>  + Phân tích so sánh thực nghiệm SAT vs CP-SAT.<br>  + Nhận xét ưu/nhược điểm & Kết luận. |
+| **3. Thuyết trình (Presentation)** | - Thiết kế Slide Phần 1 (Đặt vấn đề, mô hình hóa toán học, ứng dụng).<br>- Thuyết trình Mở đầu (Tuần 3). | - Thiết kế Slide Phần 2 (Công thức hóa SAT, ALO/AMO nâng cao, mô hình CP-SAT).<br>- Thuyết trình Kỹ thuật (Tuần 3). | - Thiết kế Slide Phần 3 (Symmetry Breaking, Order Encoding, kết quả so sánh với CP-SAT qua biểu đồ `cnsplots`).<br>- Thuyết trình Kết luận & Demo chương trình. |
 
 ---
 
 ## 2. Kế Hoạch Chi Tiết Theo Từng Tuần (3 Tuần)
 
-### TUẦN 1: Nghiên Cứu Lý Thuyết & Xây Dựng Khung Nền Tảng (Core Setup)
+### TUẦN 1: Thiết Lập Nền Tảng, Chuẩn Bị Dữ Liệu & Khung Báo Cáo Elsevier
 
 #### Nhiệm vụ Code:
-- **Tường:**
-  - Viết module đọc và trích xuất đồ thị $G=(V, E)$ từ định dạng ma trận thưa Harwell-Boeing (`bcsstk01`, `can_24`, `dwt_59`).
-  - Xây dựng cấu trúc dữ liệu đồ thị và hàm kiểm tra tính hợp lệ của hoán vị (Verifier).
-- **Tùng:**
-  - Khởi tạo khung ánh xạ biến SAT: quản lý chỉ số biến boolean $x_{i, p}$ ($1 \le i \le n, 1 \le p \le n$) thành ID số nguyên (DIMACS CNF).
-  - Viết generator tạo các mệnh đề song ánh cơ bản: Bijective clauses (ALO & AMO từng đỉnh, ALO & AMO từng vị trí).
-- **Lợi:**
-  - Thiết lập môi trường thực thi SAT Solver (cài đặt `Kissat`, `CaDiCaL` hoặc `python-sat` / `PySAT`).
-  - Viết pipeline tự động xuất file `.cnf`, gọi Solver và đọc kết quả trả về (SAT/UNSAT + model values).
+* **Tường:**
+  * Xây dựng module nạp dữ liệu đồ thị thưa `graph_loader.py` hỗ trợ các định dạng Matrix Market (`.mtx`, `.rb`).
+  * Tìm kiếm và tải về các ma trận kiểm thử có kích thước lớn từ kho chuẩn Harwell-Boeing / SuiteSparse Matrix Collection (ví dụ: `dwt_59`, `can_61`, `ash85`, `bcsstk01`).
+  * Xây dựng hàm kiểm tra nghiệm độc lập (`verify_solution`): kiểm tra song ánh $1..n$ và khoảng cách $|f(u) - f(v)| \ge k$.
+* **Tùng:**
+  * Quản lý ánh xạ biến SAT: ma trận biến boolean $x_{i, p}$ ($1 \le i \le n, 1 \le p \le n$) thành chỉ số DIMACS nguyên.
+  * Xây dựng hệ ràng buộc song ánh cơ bản (Direct ALO/AMO cho đỉnh và vị trí).
+* **Lợi:**
+  * Cấu hình môi trường SAT Solver: tích hợp `python-sat` (PySAT), hỗ trợ các backend solver (`glucose4`, `cadical153`, `minisat22`).
+  * Viết pipeline xuất file DIMACS `.cnf` chuẩn và đọc kết quả (SAT/UNSAT + model values) từ solver độc lập.
+  * Cài đặt và nghiên cứu API của thư viện bắt buộc **`cnsplots`**.
 
 #### Nhiệm vụ Báo cáo:
-- **Tường:** Hoàn thành bản thảo **Chương 1**: Tổng quan ABP, định nghĩa hình thức song ánh $f$, hàm mục tiêu $B_A(G) = \max_f \min_{\{u,v\} \in E} |f(u) - f(v)|$, so sánh với Bandwidth Problem.
-- **Tùng:** Hoàn thành bản thảo **Chương 2**: Các ứng dụng thực tế (Radio Frequency Assignment, VLSI Crosstalk Minimization, Lập lịch, Bảo mật dữ liệu).
-- **Lợi:** Soạn thảo mục **Đặc tả dữ liệu**: Cấu trúc tập chuẩn Harwell-Boeing, ý nghĩa của mật độ cạnh và phân bố bậc đỉnh trong kiểm thử.
+* **Tường:** 
+  * Tải và thiết lập khung bài báo khoa học chuẩn **Elsevier LaTeX Template** (`\documentclass[a4paper,fleqn]{cas-sc}`).
+  * Hoàn thành bản thảo **Chương 1**: Tổng quan bài toán Antibandwidth, định nghĩa hình thức song ánh $f$, hàm mục tiêu $B_A(G)$, so sánh đối ngẫu với Bandwidth Problem.
+* **Tùng:** Hoàn thành bản thảo **Chương 2**: Các ứng dụng thực tế của ABP (Radio Frequency Assignment, VLSI Crosstalk Minimization, Bảo mật thông tin, Lập lịch mạng cảm biến).
+* **Lợi:** Soạn thảo mục **Đặc tả dữ liệu thực nghiệm**: Bảng thông số kỹ thuật các ma trận kiểm thử (số đỉnh $n$, số cạnh $m$, mật độ đồ thị, bậc đỉnh lớn nhất/nhỏ nhất).
 
 #### Nhiệm vụ Thuyết trình:
-- **Cả 3 thành viên:** Họp thống nhất cấu trúc Outline Slide (15-20 slide), tông màu, template chuẩn.
-  - **Tường:** Phác thảo nội dung slide 1–5 (Giới thiệu, bài toán, động lực).
-  - **Tùng:** Phác thảo nội dung slide 6–10 (Công thức hóa SAT).
-  - **Lợi:** Phác thảo nội dung slide 11–15 (Mã hóa nâng cao & Thực nghiệm).
+* **Cả 3 thành viên:** Thống nhất dàn ý Slide (15–20 slide), phong cách thiết kế academic, phác thảo nội dung từng phần phụ trách.
 
 ---
 
-### TUẦN 2: Cài Đặt Thuật Toán Nâng Cao & Thử Nghiệm Thực Tế
+### TUẦN 2: Cài Đặt Thuật Toán Nâng Cao, CP-SAT & Order Encoding
 
 #### Nhiệm vụ Code:
-- **Tường:**
-  - Cài đặt cơ chế kiểm soát cận: tính cận trên lý thuyết $k_{max} = \lfloor n/2 \rfloor$, cận dưới $k_{min} = 1$.
-  - Hỗ trợ xây dựng chiến lược duyệt ngưỡng: Linear Search và Binary Search qua các ngưỡng $k$.
-- **Tùng:**
-  - Cài đặt hệ mệnh đề ràng buộc khoảng cách Antibandwidth:
-    $$\neg x_{u,p} \vee \neg x_{v,q} \quad (\forall \{u,v\} \in E, |p - q| < k)$$
-  - Tối ưu hóa số lượng mệnh đề sinh ra để tránh tràn bộ nhớ trên đồ thị có nhiều cạnh.
-- **Lợi:**
-  - Cài đặt kỹ thuật Phá vỡ đối xứng (Symmetry Breaking):
-    $$\neg x_{v_0, p} \quad \left(\forall p > \lceil n/2 \rceil, \text{với } \deg(v_0) = \Delta(G)\right)$$
-  - Nghiên cứu/thực hiện thử nghiệm bổ sung với Order Encoding ($y_{i,p} \iff f(i) \le p$) để so sánh hiệu năng.
+* **Tường:**
+  * Cài đặt cơ chế kiểm soát chặn cận: cận trên lý thuyết $k_{max} = \lfloor n/2 \rfloor$, cận dưới $k_{min} = 1$.
+  * Tích hợp chiến lược tìm kiếm nhị phân (Binary Search) và tìm kiếm tuần tự (Linear Search) qua các ngưỡng $k$.
+* **Tùng:**
+  * Cài đặt hệ mệnh đề ràng buộc khoảng cách Antibandwidth: $\neg x_{u,p} \lor \neg x_{v,q}$ ($\forall \{u,v\} \in E, |p - q| < k$).
+  * **Nâng cao ALO/AMO (Khuyến khích trong đề bài):** Tích hợp kỹ thuật mã hóa hồng hào hơn (như *Sequential Counter* hoặc *Commander* thông qua `pysat.card.CardEnc`) nhằm giảm số lượng mệnh đề từ $O(n^2)$ xuống $O(n)$ trên các ma trận lớn.
+  * **Mô hình hóa CP-SAT (Bắt buộc trong đề bài):** Viết module giải bài toán bằng **Google OR-Tools CP-SAT** (`src/cp_solver.py`) sử dụng biến miền nguyên `IntVar` và ràng buộc `AddAllDifferent`, làm đối trọng so sánh với SAT.
+* **Lợi:**
+  * Cài đặt kỹ thuật **Phá vỡ đối xứng (Symmetry Breaking)**: ghim đỉnh có bậc lớn nhất $v_0$ vào nửa đầu dải vị trí $\neg x_{v_0, p}$ ($\forall p > \lceil n/2 \rceil$).
+  * Cài đặt hoàn chỉnh mô hình **Order Encoding** (`y_{i, p} \iff f(i) \le p`) với các mệnh đề đơn điệu và lan truyền khoảng cách theo mô hình Tamura et al.
+  * Bổ sung cơ chế xuất đồ thị minh họa nghiệm bằng **`cnsplots`** (sơ đồ 1D Linear Arc Placement và cấu trúc đồ thị).
 
 #### Nhiệm vụ Báo cáo:
-- **Tường:** Viết **Chương 3**: Quy trình chuyển đổi bài toán Tối ưu sang bài toán Quyết định $ABP(G, k)$, thuật toán Binary Search & Incremental SAT.
-- **Tùng:** Viết **Chương 4.1 & 4.2**: Mô hình Direct Encoding chi tiết, công thức hóa hệ ràng buộc song ánh và khoảng cách.
-- **Lợi:** Viết **Chương 4.3 & 4.4**: Phân tích toán học kỹ thuật Symmetry Breaking và phương pháp Order Encoding.
+* **Tường:** Viết **Chương 3**: Quy trình chuyển đổi bài toán Tối ưu sang bài toán Quyết định $ABP(G, k)$, sơ đồ khối thuật toán Binary Search.
+* **Tùng:** Viết **Chương 4.1 & 4.2**:
+  * Chi tiết mô hình Direct Encoding, công thức hóa các ràng buộc ALO/AMO cải tiến (Sequential Counter / Commander).
+  * Chi tiết mô hình quy hoạch ràng buộc Constraint Programming (**Google OR-Tools CP-SAT**).
+* **Lợi:** Viết **Chương 4.3 & 4.4**:
+  * Cơ sở toán học của Symmetry Breaking và chứng minh thu hẹp 50% không gian tìm kiếm.
+  * Chi tiết công thức hóa Order Encoding và so sánh lý thuyết về độ phức tạp mệnh đề với Direct Encoding.
 
 #### Nhiệm vụ Thuyết trình:
-- **Tường:** Hoàn thiện thiết kế chi tiết Slide Phần 1 (Đồ họa hóa đồ thị, ví dụ minh họa bằng hình vẽ trực quan).
-- **Tùng:** Hoàn thiện thiết kế chi tiết Slide Phần 2 (Sơ đồ khối quá trình mã hóa CNF và duyệt nhị phân).
-- **Lợi:** Hoàn thiện thiết kế chi tiết Slide Phần 3 (Bảng so sánh Direct vs Order Encoding, cơ chế phá vỡ đối xứng).
+* **Tường, Tùng, Lợi:** Hoàn thiện bản nháp chi tiết của Slide Phần 1, 2, 3 tương ứng với nội dung kỹ thuật đã viết trong báo cáo.
 
 ---
 
-### TUẦN 3: Thực Nghiệm Benchmark, Hoàn Thiện Báo Cáo & Thuyết Trình
+### TUẦN 3: Thực Nghiệm Quy Mô Lớn, Hoàn Thiện Báo Cáo & Thuyết Trình
 
 #### Nhiệm vụ Code:
-- **Tường:**
-  - Chạy thực nghiệm đo đạc thời gian chạy (Execution Time) và số lượng biến/mệnh đề trên các file ma trận `bcsstk01`, `can_24`,...
-  - Vẽ biểu đồ so sánh: Thời gian giải khi có/không có Symmetry Breaking.
-- **Tùng:**
-  - Kiểm thử chéo kết quả (Cross-validation): viết test suite tự động kiểm tra tính đúng đắn của nghiệm $f$ trả về từ solver cho từng đồ thị.
-  - Đóng gói mã nguồn (clean code, tài liệu hướng dẫn cài đặt `README.md`, file chạy mẫu `main.py`).
-- **Lợi:**
-  - Thực nghiệm so sánh giữa các solver khác nhau (hoặc giữa Direct Encoding và Order Encoding).
-  - Thu thập bảng số liệu kết quả tối ưu $B_A(G)$ tìm được và thời gian CPU tương ứng.
+* **Tường:**
+  * Thu thập và chuẩn hóa bộ dữ liệu kiểm thử kích thước lớn đầy đủ (các ma trận lớn từ $n = 30$ đến $n > 100$).
+  * Phối hợp kiểm thử chéo (cross-validation) đảm bảo mọi nghiệm trả về từ SAT và CP-SAT đều vượt qua hàm Verifier.
+* **Tùng:**
+  * Chạy benchmark mô hình **Google OR-Tools CP-SAT** trên toàn bộ tập dữ liệu để lấy thời gian CPU và nghiệm tối ưu làm mốc đối chứng.
+  * Đóng gói mã nguồn sạch, hoàn thiện `README.md` hướng dẫn cài đặt và chạy thử nghiệm.
+* **Lợi:**
+  * Chạy benchmark toàn diện: **SAT Direct Encoding vs. SAT Order Encoding vs. CP-SAT**; bật/tắt **Symmetry Breaking**; so sánh giữa các SAT solver backend (`glucose4` vs `cadical153`).
+  * Sử dụng thư viện bắt buộc **`cnsplots`** để vẽ các biểu đồ chất lượng cao (thời gian giải, số lượng mệnh đề, tỷ lệ tăng tốc speedup) đưa trực tiếp vào bài báo khoa học.
 
 #### Nhiệm vụ Báo cáo:
-- **Tường:** Viết phần mở đầu, tóm tắt (Abstract), hoàn thiện danh mục tài liệu tham khảo và định dạng chuẩn báo cáo (LaTeX/Word).
-- **Tùng:** Đưa các bảng số liệu thực nghiệm, đồ thị so sánh vào **Chương 5 (Kết quả thực nghiệm)**.
-- **Lợi:** Viết phần phân tích đánh giá kết quả, ưu/nhược điểm thực tế, hướng phát triển tương lai và Kết luận chung.
-- **Cả 3 thành viên:** Review chéo toàn bộ bài báo cáo để chỉnh sửa ngữ pháp, thuật ngữ chuyên ngành và thống nhất phong cách viết.
+* **Tường:** Hoàn thiện phần mở đầu, tóm tắt (Abstract), danh mục tài liệu tham khảo và mục **Data Availability** (link GitHub Repository lưu mã nguồn và dataset). Gom toàn bộ file LaTeX `cas-sc` và kiểm tra biên dịch không lỗi.
+* **Tùng:** Chèn các bảng số liệu thực nghiệm chi tiết giữa SAT và CP-SAT vào **Chương 5 (Kết quả thực nghiệm)**.
+* **Lợi:** Soạn phần **Phân tích và Thảo luận kết quả**:
+  * Đánh giá tại sao SAT vượt trội hoặc kém hơn CP-SAT ở các mật độ đồ thị khác nhau.
+  * Đánh giá hiệu quả giảm thời gian của Symmetry Breaking và ưu nhược điểm giữa Direct Encoding vs Order Encoding.
+  * Viết **Kết luận chung** và hướng phát triển đề tài.
+* **Cả 3 thành viên:** Rà soát, hiệu đính toàn bộ báo cáo khoa học theo chuẩn Elsevier trước khi nộp.
 
-#### Nhiệm vụ Thuyết trình:
-- **Tường (Phần 1 - ~5 phút):** 
-  - Trình bày bối cảnh bài toán, định nghĩa toán học ABP, so sánh với Bandwidth, các ứng dụng vi mạch & phân bổ tần số vô tuyến.
-- **Tùng (Phần 2 - ~5 phút):** 
-  - Trình bày kỹ thuật mô hình hóa SAT, các nhóm mệnh đề Direct Encoding, chiến lược tìm kiếm nhị phân cho ngưỡng $k$.
-- **Lợi (Phần 3 - ~5 phút):** 
-  - Trình bày kỹ thuật Symmetry Breaking, Order Encoding, kết quả đánh giá trên tập Harwell-Boeing và Demo chương trình chạy thực tế.
-- **Cả 3 thành viên:** Phối hợp trả lời các câu hỏi phản biện (Q&A) từ giảng viên/hội đồng.
+#### Nhiệm vụ Thuyết trình & Demo:
+* **Tường (Phần 1 - ~5 phút):** Giới thiệu bài toán ABP, động lực nghiên cứu, ứng dụng vi mạch và phân bổ tần số.
+* **Tùng (Phần 2 - ~5 phút):** Trình bày kỹ thuật mô hình hóa SAT (Direct Encoding, ALO/AMO nâng cao) và mô hình hóa CP-SAT.
+* **Lợi (Phần 3 - ~5 phút):** Trình bày Symmetry Breaking, Order Encoding, phân tích biểu đồ thực nghiệm vẽ bởi **`cnsplots`** và **trực tiếp Demo chạy chương trình**.
+* **Cả 3 thành viên:** Tham gia phần hỏi đáp (Q&A) phản biện trước hội đồng/giảng viên.
 
 ---
 
@@ -104,14 +115,17 @@
 
 | Nội dung | Đầu ra mong đợi (Deliverables) | Người phụ trách chính | Deadline | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
-| **Parser Graph** | Module đọc file ma trận Harwell-Boeing | Tường | Cuối Tuần 1 | ⏳ Chưa bắt đầu |
-| **SAT Encoder** | Module sinh file DIMACS CNF (Song ánh + Khoảng cách) | Tùng | Cuối Tuần 1 | ⏳ Chưa bắt đầu |
-| **Solver Pipeline** | Pipeline gọi SAT solver và trích xuất nghiệm | Lợi | Cuối Tuần 1 | ⏳ Chưa bắt đầu |
-| **Draft Báo cáo 1** | Chương 1, 2 và khung tài liệu | Tường & Tùng | Cuối Tuần 1 | ⏳ Chưa bắt đầu |
-| **Symmetry Breaking** | Module bổ sung ràng buộc cắt đối xứng | Lợi | Giữa Tuần 2 | ⏳ Chưa bắt đầu |
-| **Binary Search** | Thuật toán tìm $k$ tối ưu tự động | Tùng & Tường | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
-| **Draft Báo cáo 2** | Hoàn thành Chương 3 & Chương 4 | Cả 3 | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
-| **Slide Thô** | Hoàn thiện 100% nội dung Slide | Cả 3 | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
-| **Benchmark & Charts** | Bảng kết quả chạy trên Harwell-Boeing + Đồ thị | Tường & Lợi | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
-| **Final Report** | Báo cáo hoàn chỉnh định dạng chuẩn | Cả 3 (Tường gom) | Cuối Tuần 3 | ⏳ Chưa bắt đầu |
-| **Rehearsal & Demo** | Thử thuyết trình khớp thời gian + Chuẩn bị Demo | Cả 3 | Trước ngày báo cáo | ⏳ Chưa bắt đầu |
+| **Parser & Large Data** | Module đọc file ma trận + Bộ dữ liệu ma trận lớn | Tường | Cuối Tuần 1 | 🔄 Đang hoàn thiện |
+| **SAT Encoder** | Module CNF Pairwise/Direct Encoding | Tùng | Cuối Tuần 1 |  Hoàn thành |
+| **Solver Pipeline** | Pipeline SAT Solver (PySAT + Kissat/CaDiCaL) | Lợi | Cuối Tuần 1 |  Hoàn thành |
+| **Order Encoding** | Module mã hóa thứ tự Order Encoding | Lợi | Giữa Tuần 2 |  Hoàn thành |
+| **Symmetry Breaking** | Module cắt tỉa không gian đối xứng | Lợi | Giữa Tuần 2 |  Hoàn thành |
+| **CP-SAT Solver** | Mô hình giải chính xác bằng Google OR-Tools CP-SAT | Tùng | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
+| **Advanced AMO/ALO** | Mã hóa CardEnc (Sequential Counter/Commander) | Tùng | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
+| **cnsplots Visualizer** | Module vẽ đồ thị nghiệm & biểu đồ benchmark | Lợi | Cuối Tuần 2 | 🔄 Đang triển khai |
+| **Draft Báo cáo 1** | Chương 1, 2 và khung Template Elsevier `cas-sc` | Tường & Tùng | Cuối Tuần 1 | ⏳ Chưa bắt đầu |
+| **Draft Báo cáo 2** | Chương 3 & Chương 4 (SAT + CP-SAT + Order) | Cả 3 | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
+| **Benchmark Suite** | Bảng số liệu SAT vs CP-SAT trên ma trận lớn | Tùng & Lợi | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
+| **Slide Báo cáo** | Hoàn thiện bộ slide thuyết trình | Cả 3 | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
+| **Final Elsevier Paper** | Báo cáo hoàn chỉnh chuẩn `cas-sc` + link GitHub | Cả 3 (Tường gom) | Cuối Tuần 3 | ⏳ Chưa bắt đầu |
+| **Rehearsal & Demo** | Thử thuyết trình khớp thời gian + Kịch bản Demo | Cả 3 | Trước ngày nộp | ⏳ Chưa bắt đầu |

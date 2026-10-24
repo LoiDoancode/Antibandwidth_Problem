@@ -3,6 +3,8 @@
 Usage:
     python main.py --input data/sample_c5.mtx
     python main.py --input data/sample_p6.mtx --solver cadical153
+    python main.py --input data/sample_p6.mtx --encoding order
+    python main.py --input data/sample_p6.mtx --visualize solution_p6.png
     python main.py --input data/sample_c5.mtx --check-k 2
 """
 
@@ -16,7 +18,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.graph_loader import load_graph
 from src.sat_encoder import AntibandwidthSATEncoder
+from src.order_encoder import AntibandwidthOrderEncoder
 from src.solver import AntibandwidthSolver
+from src.visualizer import visualize_antibandwidth_labeling
 
 
 def print_banner():
@@ -51,6 +55,19 @@ def parse_args():
         help="PySAT solver backend (e.g., 'glucose4', 'cadical153', 'minisat22', 'lingeling'). Default: glucose4",
     )
     parser.add_argument(
+        "--encoding",
+        type=str,
+        choices=["direct", "order"],
+        default="direct",
+        help="SAT encoding formulation: 'direct' (Direct Encoding) or 'order' (Order Encoding). Default: direct",
+    )
+    parser.add_argument(
+        "--external-solver",
+        type=str,
+        default=None,
+        help="Command / path to external SAT solver binary (e.g. 'kissat', 'cadical').",
+    )
+    parser.add_argument(
         "--method",
         type=str,
         choices=["binary_search", "linear_search"],
@@ -74,6 +91,19 @@ def parse_args():
         default=None,
         help="Export CNF formula for the target k (specified by --check-k) to a DIMACS file.",
     )
+    parser.add_argument(
+        "--visualize",
+        type=str,
+        nargs="?",
+        const="solution.png",
+        default=None,
+        help="Path to save graphical visualization of the solution (e.g., --visualize solution.png).",
+    )
+    parser.add_argument(
+        "--show-plot",
+        action="store_true",
+        help="Open interactive GUI window to view the graph visualization plot.",
+    )
     return parser.parse_args()
 
 
@@ -95,11 +125,12 @@ def main():
         sys.exit(1)
 
     print(f"[*] Graph Summary:")
-    print(f"    - Name:        {info['filename']}")
+    print(f"    - Name:         {info['filename']}")
     print(f"    - Vertices |V|: {info['num_vertices']}")
     print(f"    - Edges |E|:    {info['num_edges']}")
     print(f"    - Density:      {info['density']}")
     print(f"    - Degree range: [{info['min_degree']}, {info['max_degree']}]")
+    print(f"    - Encoding:     {args.encoding.upper()}")
 
     break_sym = not args.no_symmetry_breaking
 
@@ -109,7 +140,10 @@ def main():
         print(f"\n[*] Mode: Single k Check (Target k = {target_k})")
 
         if args.export_dimacs:
-            encoder = AntibandwidthSATEncoder(graph, break_symmetry=break_sym)
+            if args.encoding == "order":
+                encoder = AntibandwidthOrderEncoder(graph, break_symmetry=break_sym)
+            else:
+                encoder = AntibandwidthSATEncoder(graph, break_symmetry=break_sym)
             encoder.export_dimacs(target_k, args.export_dimacs)
             print(f"[+] Exported DIMACS CNF to: {args.export_dimacs}")
             return
@@ -117,7 +151,9 @@ def main():
         solver = AntibandwidthSolver(
             graph,
             solver_name=args.solver,
+            encoding=args.encoding,
             break_symmetry=break_sym,
+            external_solver=args.external_solver,
             verbose=False,
         )
 
@@ -130,6 +166,16 @@ def main():
                 valid, min_d, err = solver.verify_solution(labeling, target_k)
                 print(f"[*] Solution verification: {'VALID' if valid else f'INVALID: {err}'}")
                 print(f"[*] Sample vertex labeling: {dict(list(labeling.items())[:10])} ...")
+
+                if args.visualize or args.show_plot:
+                    visualize_antibandwidth_labeling(
+                        graph=graph,
+                        labeling=labeling,
+                        k=target_k,
+                        title=f"Antibandwidth Solution: k = {target_k} ({info['filename']})",
+                        save_path=args.visualize,
+                        show=args.show_plot,
+                    )
         except RuntimeError as e:
             print(f"[Error] {e}")
             sys.exit(1)
@@ -139,7 +185,9 @@ def main():
     solver = AntibandwidthSolver(
         graph,
         solver_name=args.solver,
+        encoding=args.encoding,
         break_symmetry=break_sym,
+        external_solver=args.external_solver,
         verbose=True,
     )
 
@@ -163,13 +211,23 @@ def main():
 
     if labeling:
         print(f"\n Optimal Labeling (Vertex -> Position):")
-        # Print nicely formatted vertex-to-position mapping
         sorted_labels = sorted(labeling.items(), key=lambda x: x[0])
         preview = sorted_labels[:15]
         for v, pos in preview:
             print(f"   Vertex {v:3d} -> Position {pos:3d}")
         if len(sorted_labels) > 15:
             print(f"   ... ({len(sorted_labels) - 15} more vertices)")
+
+        # Generate visual layout / save plot
+        if args.visualize or args.show_plot:
+            visualize_antibandwidth_labeling(
+                graph=graph,
+                labeling=labeling,
+                k=opt_k,
+                title=f"Optimal Antibandwidth B*(G) = {opt_k} for {info['filename']}",
+                save_path=args.visualize,
+                show=args.show_plot,
+            )
 
     if args.output and labeling:
         out_path = Path(args.output)
@@ -178,6 +236,9 @@ def main():
             "optimal_antibandwidth": opt_k,
             "solving_time_seconds": results["total_time"],
             "labeling": labeling,
+            "encoding": args.encoding,
+            "solver": args.solver,
+            "symmetry_breaking": break_sym,
         }
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(out_data, f, indent=2)
