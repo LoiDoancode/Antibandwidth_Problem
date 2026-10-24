@@ -16,7 +16,7 @@ from pathlib import Path
 # Add workspace directory to python path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from src.graph_loader import load_graph
+from src.graph_loader import load_graph, resolve_graph_path
 from src.sat_encoder import AntibandwidthSATEncoder
 from src.order_encoder import AntibandwidthOrderEncoder
 from src.solver import AntibandwidthSolver
@@ -39,8 +39,8 @@ def parse_args():
     parser.add_argument(
         "-i", "--input",
         type=str,
-        default="data/sample_c5.mtx",
-        help="Path to the graph benchmark file (.mtx, .rb, .edges, .txt). Default: data/sample_c5.mtx",
+        default="data/instance/harwell-boeing_v2/can___24.txt",
+        help="Path to graph benchmark file (e.g. data/instance/harwell-boeing_v2/can___24.txt).",
     )
     parser.add_argument(
         "-k", "--check-k",
@@ -111,10 +111,10 @@ def main():
     print_banner()
     args = parse_args()
 
-    input_path = Path(args.input)
+    input_path = resolve_graph_path(args.input)
     if not input_path.exists():
-        print(f"[Error] File not found: {input_path}")
-        print("Please check the path or use one of the files in data/ (e.g. data/sample_c5.mtx)")
+        print(f"[Error] File not found: {args.input}")
+        print("Please check the path or use one of the files in data/instance/ (e.g. data/instance/harwell-boeing_v2/can___24.txt)")
         sys.exit(1)
 
     print(f"[*] Loading graph from: {input_path} ...")

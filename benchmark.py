@@ -36,8 +36,8 @@ def parse_args():
     parser.add_argument(
         "--data-dir",
         type=str,
-        default="data",
-        help="Directory containing benchmark graph files (.mtx, .rb, etc.). Default: data",
+        default="data/instance/harwell-boeing_v2",
+        help="Directory containing benchmark graph files. Default: data/instance/harwell-boeing_v2",
     )
     parser.add_argument(
         "--files",
@@ -84,17 +84,23 @@ def parse_args():
     return parser.parse_args()
 
 
-def discover_graph_files(data_dir: str) -> List[Path]:
-    """Find all supported graph files in the directory."""
+def discover_graph_files(data_dir: str, recursive: bool = True) -> List[Path]:
+    """Find all supported graph files in the directory (recursively if requested)."""
     dir_path = Path(data_dir)
     if not dir_path.exists():
         return []
 
-    supported_exts = {".mtx", ".rb", ".edges", ".txt"}
+    supported_exts = {".mtx", ".rb", ".edges", ".txt", ""}
+    ignored_names = {"readme.md", "license", ".gitignore", "readme.txt"}
+
     files = []
-    for f in sorted(dir_path.iterdir()):
-        if f.is_file() and f.suffix.lower() in supported_exts:
-            files.append(f)
+    iterator = dir_path.rglob("*") if recursive else dir_path.iterdir()
+    for f in sorted(iterator):
+        if f.is_file():
+            if f.name.lower() in ignored_names:
+                continue
+            if f.suffix.lower() in supported_exts or f.suffix == "":
+                files.append(f)
     return files
 
 

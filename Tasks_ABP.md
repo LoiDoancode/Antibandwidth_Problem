@@ -116,16 +116,18 @@
 | Nội dung | Đầu ra mong đợi (Deliverables) | Người phụ trách chính | Deadline | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
 | **Parser & Large Data** | Module đọc file ma trận + Bộ dữ liệu ma trận lớn | Tường | Cuối Tuần 1 | 🔄 Đang hoàn thiện |
-| **SAT Encoder** | Module CNF Pairwise/Direct Encoding | Tùng | Cuối Tuần 1 |  Hoàn thành |
-| **Solver Pipeline** | Pipeline SAT Solver (PySAT + Kissat/CaDiCaL) | Lợi | Cuối Tuần 1 |  Hoàn thành |
-| **Order Encoding** | Module mã hóa thứ tự Order Encoding | Lợi | Giữa Tuần 2 |  Hoàn thành |
-| **Symmetry Breaking** | Module cắt tỉa không gian đối xứng | Lợi | Giữa Tuần 2 |  Hoàn thành |
+| **SAT Encoder** | Module CNF Pairwise/Direct Encoding | Tùng | Cuối Tuần 1 | ✅ Hoàn thành |
+| **Solver Pipeline** | Pipeline SAT Solver (PySAT + Kissat/CaDiCaL) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
+| **Data Specification** | Đặc tả dữ liệu ma trận kiểm thử chuẩn (Báo cáo) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
+| **Slide Phác Thảo 3** | Nội dung Slide 11–15 (Nâng cao & Thực nghiệm) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
+| **Order Encoding** | Module mã hóa thứ tự Order Encoding | Lợi | Giữa Tuần 2 | ✅ Hoàn thành (Vượt tiến độ) |
+| **Symmetry Breaking** | Module cắt tỉa không gian đối xứng | Lợi | Giữa Tuần 2 | ✅ Hoàn thành (Vượt tiến độ) |
 | **CP-SAT Solver** | Mô hình giải chính xác bằng Google OR-Tools CP-SAT | Tùng | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
 | **Advanced AMO/ALO** | Mã hóa CardEnc (Sequential Counter/Commander) | Tùng | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
-| **cnsplots Visualizer** | Module vẽ đồ thị nghiệm & biểu đồ benchmark | Lợi | Cuối Tuần 2 | 🔄 Đang triển khai |
+| **cnsplots Visualizer** | Module vẽ đồ thị nghiệm & biểu đồ benchmark | Lợi | Cuối Tuần 2 | ✅ Hoàn thành (Vượt tiến độ) |
 | **Draft Báo cáo 1** | Chương 1, 2 và khung Template Elsevier `cas-sc` | Tường & Tùng | Cuối Tuần 1 | ⏳ Chưa bắt đầu |
 | **Draft Báo cáo 2** | Chương 3 & Chương 4 (SAT + CP-SAT + Order) | Cả 3 | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
 | **Benchmark Suite** | Bảng số liệu SAT vs CP-SAT trên ma trận lớn | Tùng & Lợi | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
 | **Slide Báo cáo** | Hoàn thiện bộ slide thuyết trình | Cả 3 | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
 | **Final Elsevier Paper** | Báo cáo hoàn chỉnh chuẩn `cas-sc` + link GitHub | Cả 3 (Tường gom) | Cuối Tuần 3 | ⏳ Chưa bắt đầu |
-| **Rehearsal & Demo** | Thử thuyết trình khớp thời gian + Kịch bản Demo | Cả 3 | Trước ngày nộp | ⏳ Chưa bắt đầu |
+| **Rehearsal & Demo** | Thử thuyết trình khớp thời gian + Kịch bản Demo | Cả 3 | Trước ngày nộp | ⏳ Chưa bắt đầu |
