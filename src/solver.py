@@ -289,3 +289,13 @@ class AntibandwidthSolver:
             "actual_min_dist": actual_min,
             "error": err,
         }
+
+    def solve_binary_search(self) -> Tuple[int, Optional[Dict[int, int]], float]:
+        """Convenience method: run binary search and return (optimal_k, best_labeling, total_time)."""
+        res = self.solve(method="binary_search")
+        return res["optimal_k"], res["labeling"], res["total_time"]
+
+    def solve_linear_search(self) -> Tuple[int, Optional[Dict[int, int]], float]:
+        """Convenience method: run linear search and return (optimal_k, best_labeling, total_time)."""
+        res = self.solve(method="linear_search")
+        return res["optimal_k"], res["labeling"], res["total_time"]

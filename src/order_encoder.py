@@ -145,7 +145,7 @@ class AntibandwidthOrderEncoder:
         if k > 1:
             for u, v in self.edges:
                 # Order interval propagation clauses (Tamura et al.)
-                for p in range(1, n - k):
+                for p in range(1, n - k + 1):
                     # u <= p and v > p  ==>  v > p + k - 1
                     cnf.append([-self.var(u, p), self.var(v, p), -self.var(v, p + k - 1)])
                     # v <= p and u > p  ==>  u > p + k - 1
