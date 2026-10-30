@@ -109,13 +109,17 @@ def test_2_order_encoding_monotonicity_and_tamura_intervals():
 
     # 3. Tamura Interval propagation clauses:
     # For edge (u, v) and for each p in [1, n - k]:
-    # [-var(u, p), var(v, p), -var(v, p + k - 1)]
-    # In P4 with k=2, n-k = 2. Positions p = 1 and p = 2 must both exist!
+    # - For p = 1: [-var(u, 1), var(v, 1), -var(v, k)]
+    # - For p > 1: [-var(u, p), var(u, p - 1), var(v, p), -var(v, p + k - 1)]
     tamura_clauses_count = 0
     for u, v in G.edges():
         for p in range(1, n - k + 1):
-            c1 = [-encoder.var(u, p), encoder.var(v, p), -encoder.var(v, p + k - 1)]
-            c2 = [-encoder.var(v, p), encoder.var(u, p), -encoder.var(u, p + k - 1)]
+            if p == 1:
+                c1 = [-encoder.var(u, 1), encoder.var(v, 1), -encoder.var(v, k)]
+                c2 = [-encoder.var(v, 1), encoder.var(u, 1), -encoder.var(u, k)]
+            else:
+                c1 = [-encoder.var(u, p), encoder.var(u, p - 1), encoder.var(v, p), -encoder.var(v, p + k - 1)]
+                c2 = [-encoder.var(v, p), encoder.var(v, p - 1), encoder.var(u, p), -encoder.var(u, p + k - 1)]
             assert c1 in cnf.clauses, f"Missing Tamura interval clause {c1} for p={p}"
             assert c2 in cnf.clauses, f"Missing Tamura interval clause {c2} for p={p}"
             tamura_clauses_count += 2

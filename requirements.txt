@@ -1,7 +1,15 @@
+# Core algorithm & SAT dependencies
 python-sat>=0.1.8.dev1
 networkx>=3.0
 scipy>=1.10.0
 numpy>=1.23.0
+ortools>=9.6.0
+
+# Visualization
 matplotlib>=3.6.0
 cnsplots>=0.1.0
-ortools>=9.6.0
+
+# Testing & Code quality (CI/CD)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+flake8>=6.0.0
