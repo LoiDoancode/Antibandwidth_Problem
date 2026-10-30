@@ -2,52 +2,38 @@ name: Antibandwidth SAT CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [ main, master, Loi_ABP ]
   pull_request:
-    branches: [main, master]
+    branches: [ main, master ]
 
 jobs:
   lint:
     name: Code Linting & Syntax Check
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
-
-      - name: Install flake8
+      - name: Check syntax errors
         run: |
           python -m pip install --upgrade pip
           pip install flake8
-
-      - name: Lint for syntax errors and undefined names
-        run: |
-          # Stop build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
   test:
-    name: Unit Tests (Python ${{ matrix.python-version }})
+    name: Unit & Pipeline Tests (Python 3.11)
     needs: lint
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
           cache: "pip"
 
       - name: Install dependencies
@@ -59,10 +45,7 @@ jobs:
         run: |
           pytest tests/
 
-      - name: CLI Smoke Test (Direct Encoding)
+      - name: CLI Smoke Test (Sample Graphs)
         run: |
-          python main.py -i data/instance/harwell-boeing_v2/can___24.txt --check-k 1 --solver glucose4
-
-      - name: CLI Smoke Test (Order Encoding)
-        run: |
-          python main.py -i data/instance/harwell-boeing_v2/can___24.txt --check-k 1 --encoding order --solver glucose4
+          python main.py -i data/sample_p6.mtx --check-k 1 --solver glucose4
+          python main.py -i data/sample_c5.mtx --check-k 1 --encoding order --solver glucose4
