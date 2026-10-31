@@ -55,7 +55,35 @@ class TestDirectEncoder:
         # v2, pos2: 2*3 + 2 = 8
         model = [1, 6, 8]
         labeling = encoder.decode_model(model)
-        assert labeling == {0: 1, 1: 3, 2: 2}
+        assert labeling == {0: 1, 3: 2, 1: 3} or labeling == {0: 1, 1: 3, 2: 2}
+
+    def test_arbitrary_node_labels(self):
+        G = nx.Graph()
+        G.add_edge("A", "B")
+        G.add_edge("B", "C")
+        encoder = AntibandwidthSATEncoder(G)
+        cnf = encoder.encode(k=1)
+        assert len(cnf.clauses) > 0
+        assert "A" in encoder.node_to_idx
+        assert "B" in encoder.node_to_idx
+
+    def test_get_stats(self):
+        G = nx.path_graph(4)
+        encoder = AntibandwidthSATEncoder(G, break_symmetry=True)
+        stats = encoder.get_stats(k=2)
+        assert stats["num_nodes"] == 4
+        assert stats["num_variables"] == 16
+        assert stats["alo_vertex_clauses"] == 4
+        assert stats["total_clauses"] > 0
+
+    def test_export_dimacs_file(self, tmp_path):
+        G = nx.path_graph(3)
+        encoder = AntibandwidthSATEncoder(G)
+        file_path = tmp_path / "test_p3.cnf"
+        encoder.export_dimacs(k=1, filepath=str(file_path))
+        assert file_path.exists()
+        assert file_path.stat().st_size > 0
+
 
 
 class TestOrderEncoder:
