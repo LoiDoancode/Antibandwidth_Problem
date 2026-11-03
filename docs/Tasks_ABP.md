@@ -17,9 +17,9 @@
 
 | Trụ cột | Tường | Tùng | Lợi |
 | :--- | :--- | :--- | :--- |
-| **1. Code & Thuật toán** | - Parser đồ thị Harwell-Boeing.<br>- Bổ sung tập dữ liệu ma trận lớn.<br>- Bộ kiểm tra tính hợp lệ của nghiệm (Verifier). | - Direct Encoding (Pairwise).<br>- Tối ưu ALO/AMO nâng cao (Sequential Counter / Commander qua PySAT `CardEnc`).<br>- Xây dựng mô hình đối chuẩn **Google OR-Tools CP-SAT**. | - Pipeline SAT Solver (PySAT + Kissat/CaDiCaL).<br>- Kỹ thuật Phá vỡ đối xứng (Symmetry Breaking).<br>- Cài đặt **Order Encoding**.<br>- Trực quan hóa đồ thị & biểu đồ bằng **`cnsplots`**. |
-| **2. Báo cáo (Report)** | - Khởi tạo Template Elsevier (`cas-sc`).<br>- Soạn Chương 1 & 2 (Tổng quan bài toán, ứng dụng thực tế).<br>- Biên tập mục **Data Availability** (Link GitHub) & Abstract. | - Soạn Chương 3 & 4.1 - 4.2:<br>  + Chuyển đổi tối ưu sang SAT & mô hình CP-SAT.<br>  + Chi tiết các hệ ràng buộc ALO/AMO nâng cao & khoảng cách. | - Soạn Chương 4.3 - 5:<br>  + Cơ chế Symmetry Breaking & Order Encoding.<br>  + Phân tích so sánh thực nghiệm SAT vs CP-SAT.<br>  + Nhận xét ưu/nhược điểm & Kết luận. |
-| **3. Thuyết trình (Presentation)** | - Thiết kế Slide Phần 1 (Đặt vấn đề, mô hình hóa toán học, ứng dụng).<br>- Thuyết trình Mở đầu (Tuần 3). | - Thiết kế Slide Phần 2 (Công thức hóa SAT, ALO/AMO nâng cao, mô hình CP-SAT).<br>- Thuyết trình Kỹ thuật (Tuần 3). | - Thiết kế Slide Phần 3 (Symmetry Breaking, Order Encoding, kết quả so sánh với CP-SAT qua biểu đồ `cnsplots`).<br>- Thuyết trình Kết luận & Demo chương trình. |
+| **1. Code & Thuật toán** | - Parser đồ thị Harwell-Boeing.<br>- Bổ sung tập dữ liệu ma trận lớn.<br>- Bộ kiểm tra tính hợp lệ của nghiệm (Verifier).<br>- Cài đặt **Order Encoding** (`src/order_encoder.py`). | - Direct Encoding (Pairwise).<br>- Tối ưu ALO/AMO nâng cao (Sequential Counter / Commander qua PySAT `CardEnc`).<br>- Xây dựng mô hình đối chuẩn **Google OR-Tools CP-SAT**. | - Pipeline SAT Solver (PySAT + Kissat/CaDiCaL).<br>- Kỹ thuật Phá vỡ đối xứng (Symmetry Breaking).<br>- Trực quan hóa đồ thị & biểu đồ bằng **`cnsplots`**.<br>- Pipeline thực nghiệm benchmark và xử lý đa ma trận. |
+| **2. Báo cáo (Report)** | - Khởi tạo Template Elsevier (`cas-sc`).<br>- Soạn Chương 1 & 2 (Tổng quan bài toán, ứng dụng thực tế).<br>- Soạn Chương 4.4 (Chi tiết mô hình Order Encoding - Tamura et al.).<br>- Biên tập mục **Data Availability** (Link GitHub) & Abstract. | - Soạn Chương 3 & 4.1 - 4.2:<br>  + Chuyển đổi tối ưu sang SAT & mô hình CP-SAT.<br>  + Chi tiết các hệ ràng buộc ALO/AMO nâng cao & khoảng cách. | - Soạn Chương 4.3 (Cơ chế Symmetry Breaking).<br>- Soạn Chương 5 (Phân tích so sánh thực nghiệm SAT vs CP-SAT qua biểu đồ `cnsplots`, nhận xét ưu/nhược điểm & Kết luận). |
+| **3. Thuyết trình (Presentation)** | - Thiết kế Slide Phần 1 (Đặt vấn đề, mô hình hóa toán học, ứng dụng, Order Encoding).<br>- Thuyết trình Mở đầu (Tuần 3). | - Thiết kế Slide Phần 2 (Công thức hóa Direct Encoding, ALO/AMO nâng cao, mô hình CP-SAT).<br>- Thuyết trình Kỹ thuật (Tuần 3). | - Thiết kế Slide Phần 3 (Symmetry Breaking, kết quả so sánh với CP-SAT qua biểu đồ `cnsplots`).<br>- Thuyết trình Kết luận & Demo chương trình. |
 
 ---
 
@@ -58,23 +58,24 @@
 * **Tường:**
   * Cài đặt cơ chế kiểm soát chặn cận: cận trên lý thuyết $k_{max} = \lfloor n/2 \rfloor$, cận dưới $k_{min} = 1$.
   * Tích hợp chiến lược tìm kiếm nhị phân (Binary Search) và tìm kiếm tuần tự (Linear Search) qua các ngưỡng $k$.
+  * Cài đặt hoàn chỉnh mô hình **Order Encoding** (`src/order_encoder.py`): định nghĩa biến $y_{i, p} \iff f(i) \le p$, các mệnh đề đơn điệu và lan truyền khoảng cách theo mô hình Tamura et al.
 * **Tùng:**
   * Cài đặt hệ mệnh đề ràng buộc khoảng cách Antibandwidth: $\neg x_{u,p} \lor \neg x_{v,q}$ ($\forall \{u,v\} \in E, |p - q| < k$).
   * **Nâng cao ALO/AMO (Khuyến khích trong đề bài):** Tích hợp kỹ thuật mã hóa hồng hào hơn (như *Sequential Counter* hoặc *Commander* thông qua `pysat.card.CardEnc`) nhằm giảm số lượng mệnh đề từ $O(n^2)$ xuống $O(n)$ trên các ma trận lớn.
   * **Mô hình hóa CP-SAT (Bắt buộc trong đề bài):** Viết module giải bài toán bằng **Google OR-Tools CP-SAT** (`src/cp_solver.py`) sử dụng biến miền nguyên `IntVar` và ràng buộc `AddAllDifferent`, làm đối trọng so sánh với SAT.
 * **Lợi:**
   * Cài đặt kỹ thuật **Phá vỡ đối xứng (Symmetry Breaking)**: ghim đỉnh có bậc lớn nhất $v_0$ vào nửa đầu dải vị trí $\neg x_{v_0, p}$ ($\forall p > \lceil n/2 \rceil$).
-  * Cài đặt hoàn chỉnh mô hình **Order Encoding** (`y_{i, p} \iff f(i) \le p`) với các mệnh đề đơn điệu và lan truyền khoảng cách theo mô hình Tamura et al.
+  * Xây dựng pipeline tích hợp batch đa ma trận (`main.py`, `benchmark.py`) và quy trình đo lường benchmark tự động.
   * Bổ sung cơ chế xuất đồ thị minh họa nghiệm bằng **`cnsplots`** (sơ đồ 1D Linear Arc Placement và cấu trúc đồ thị).
 
 #### Nhiệm vụ Báo cáo:
-* **Tường:** Viết **Chương 3**: Quy trình chuyển đổi bài toán Tối ưu sang bài toán Quyết định $ABP(G, k)$, sơ đồ khối thuật toán Binary Search.
+* **Tường:** Viết **Chương 3** (Quy trình chuyển đổi bài toán Tối ưu sang bài toán Quyết định $ABP(G, k)$, sơ đồ khối Binary Search) và **Chương 4.4** (Chi tiết công thức hóa Order Encoding, bảng so sánh lý thuyết số biến và số mệnh đề với Direct Encoding).
 * **Tùng:** Viết **Chương 4.1 & 4.2**:
   * Chi tiết mô hình Direct Encoding, công thức hóa các ràng buộc ALO/AMO cải tiến (Sequential Counter / Commander).
   * Chi tiết mô hình quy hoạch ràng buộc Constraint Programming (**Google OR-Tools CP-SAT**).
-* **Lợi:** Viết **Chương 4.3 & 4.4**:
+* **Lợi:** Viết **Chương 4.3**:
   * Cơ sở toán học của Symmetry Breaking và chứng minh thu hẹp 50% không gian tìm kiếm.
-  * Chi tiết công thức hóa Order Encoding và so sánh lý thuyết về độ phức tạp mệnh đề với Direct Encoding.
+  * Xây dựng đề cương đánh giá thực nghiệm đa chiều (Runtime, Clause Count, Speedup).
 
 #### Nhiệm vụ Thuyết trình:
 * **Tường, Tùng, Lợi:** Hoàn thiện bản nháp chi tiết của Slide Phần 1, 2, 3 tương ứng với nội dung kỹ thuật đã viết trong báo cáo.
@@ -104,9 +105,9 @@
 * **Cả 3 thành viên:** Rà soát, hiệu đính toàn bộ báo cáo khoa học theo chuẩn Elsevier trước khi nộp.
 
 #### Nhiệm vụ Thuyết trình & Demo:
-* **Tường (Phần 1 - ~5 phút):** Giới thiệu bài toán ABP, động lực nghiên cứu, ứng dụng vi mạch và phân bổ tần số.
+* **Tường (Phần 1 - ~5 phút):** Giới thiệu bài toán ABP, động lực nghiên cứu, ứng dụng vi mạch và mô hình hóa Order Encoding.
 * **Tùng (Phần 2 - ~5 phút):** Trình bày kỹ thuật mô hình hóa SAT (Direct Encoding, ALO/AMO nâng cao) và mô hình hóa CP-SAT.
-* **Lợi (Phần 3 - ~5 phút):** Trình bày Symmetry Breaking, Order Encoding, phân tích biểu đồ thực nghiệm vẽ bởi **`cnsplots`** và **trực tiếp Demo chạy chương trình**.
+* **Lợi (Phần 3 - ~5 phút):** Trình bày kỹ thuật Symmetry Breaking, phân tích biểu đồ thực nghiệm vẽ bởi **`cnsplots`** và **trực tiếp Demo chạy chương trình**.
 * **Cả 3 thành viên:** Tham gia phần hỏi đáp (Q&A) phản biện trước hội đồng/giảng viên.
 
 ---
@@ -120,7 +121,7 @@
 | **Solver Pipeline** | Pipeline SAT Solver (PySAT + Kissat/CaDiCaL) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
 | **Data Specification** | Đặc tả dữ liệu ma trận kiểm thử chuẩn (Báo cáo) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
 | **Slide Phác Thảo 3** | Nội dung Slide 11–15 (Nâng cao & Thực nghiệm) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
-| **Order Encoding** | Module mã hóa thứ tự Order Encoding | Lợi | Giữa Tuần 2 | ✅ Hoàn thành (Vượt tiến độ) |
+| **Order Encoding** | Module mã hóa thứ tự Order Encoding (`src/order_encoder.py`) | Tường | Giữa Tuần 2 | ✅ Hoàn thành |
 | **Symmetry Breaking** | Module cắt tỉa không gian đối xứng | Lợi | Giữa Tuần 2 | ✅ Hoàn thành (Vượt tiến độ) |
 | **CP-SAT Solver** | Mô hình giải chính xác bằng Google OR-Tools CP-SAT | Tùng | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
 | **Advanced AMO/ALO** | Mã hóa CardEnc (Sequential Counter/Commander) | Tùng | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
@@ -130,4 +131,4 @@
 | **Benchmark Suite** | Bảng số liệu SAT vs CP-SAT trên ma trận lớn | Tùng & Lợi | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
 | **Slide Báo cáo** | Hoàn thiện bộ slide thuyết trình | Cả 3 | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
 | **Final Elsevier Paper** | Báo cáo hoàn chỉnh chuẩn `cas-sc` + link GitHub | Cả 3 (Tường gom) | Cuối Tuần 3 | ⏳ Chưa bắt đầu |
-| **Rehearsal & Demo** | Thử thuyết trình khớp thời gian + Kịch bản Demo | Cả 3 | Trước ngày nộp | ⏳ Chưa bắt đầu |
+| **Rehearsal & Demo** | Thử thuyết trình khớp thời gian + Kịch bản Demo | Cả 3 | Trước ngày nộp | ⏳ Chưa bắt đầu |
