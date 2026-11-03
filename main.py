@@ -1,12 +1,12 @@
 """Main entry point for the Antibandwidth Problem (ABP) Solver Framework.
 
 Usage:
-    python main.py --input data/sample_c5.mtx
-    python main.py --input data/sample_p6.mtx --solver cadical153
-    python main.py --input data/sample_p6.mtx --encoding order
-    python main.py --input data/sample_p6.mtx --encoding cpsat
-    python main.py --input data/sample_p6.mtx --visualize solution_p6.png
-    python main.py --input data/sample_c5.mtx --check-k 2
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --solver cadical153
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding order
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding cpsat
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --visualize solution_jgl009.png
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --check-k 1
 """
 
 import argparse
