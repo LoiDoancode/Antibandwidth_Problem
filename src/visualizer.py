@@ -1,9 +1,4 @@
-"""Visualization module for Antibandwidth Problem (ABP).
-
-Provides functions to visualize:
-1. Graph solution labeling: Network graph view & 1D linear placement view showing edge distances.
-2. Algorithm benchmark comparisons: Execution time, clause counts, and speedup charts.
-"""
+"""Visualization module for Antibandwidth Problem (ABP)"""
 
 from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
@@ -11,6 +6,10 @@ import networkx as nx
 
 try:
     import matplotlib
+    try:
+        matplotlib.use("Agg")
+    except Exception:
+        pass
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
     HAS_MATPLOTLIB = True
@@ -63,25 +62,6 @@ def visualize_antibandwidth_labeling(
     save_path: Optional[str] = None,
     show: bool = False,
 ) -> bool:
-    """Visualize the graph and its Antibandwidth labeling.
-
-    Creates two side-by-side plots:
-    1. Circular / Spring network graph layout: vertices colored by assigned position f(v),
-       edges labeled with distances |f(u) - f(v)|. Critical edges (distance == k) highlighted.
-    2. 1D Linear Permutation layout: vertices placed on a line from 1 to n, with edge
-       arcs demonstrating that all edge spans are >= k.
-
-    Args:
-        graph: NetworkX graph.
-        labeling: Dictionary mapping vertex -> position in {1, ..., n}.
-        k: Minimum antibandwidth distance achieved.
-        title: Optional plot title.
-        save_path: Optional file path (e.g. 'solution.png') to save the figure.
-        show: If True, calls plt.show() to display GUI window.
-
-    Returns:
-        True if visual figure was created and saved/shown; False if matplotlib unavailable.
-    """
     n = graph.number_of_nodes()
     edges = list(graph.edges())
 
@@ -91,6 +71,12 @@ def visualize_antibandwidth_labeling(
     if not HAS_MATPLOTLIB:
         print("[Warning] matplotlib is not installed. To generate graphical plots, run: pip install matplotlib")
         return False
+
+    if HAS_CNSPLOTS:
+        try:
+            cns.setup_matplotlib()
+        except Exception:
+            pass
 
     # Create figure with 2 subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
@@ -262,7 +248,7 @@ def visualize_benchmark_comparison(
 
     if HAS_CNSPLOTS:
         try:
-            cns.set_style("nature")
+            cns.setup_matplotlib()
         except Exception:
             pass
 
@@ -276,29 +262,72 @@ def visualize_benchmark_comparison(
     for d in benchmark_data:
         g_idx = graphs.index(d["graph"])
         cfg = d["config"]
-        val = d["time"] if metric == "time" else d.get("clauses", 0)
-        data_matrix[cfg][g_idx] = val
+        raw_val = d["time"] if metric == "time" else d.get("clauses", 0)
+        data_matrix[cfg][g_idx] = float(raw_val)
 
     x = np.arange(len(graphs))
-    bar_width = 0.8 / len(configs)
+    bar_width = 0.8 / max(1, len(configs))
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(max(10, len(graphs) * 2), 6))
 
-    colors = ["#2b5c8f", "#d95f02", "#7570b3", "#1b9e77", "#e7298a"]
+    colors = [
+        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+        "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+    ]
+    all_bars_info = []
     for i, cfg in enumerate(configs):
         offset = (i - len(configs) / 2 + 0.5) * bar_width
         vals = data_matrix[cfg]
-        bars = ax.bar(x + offset, vals, width=bar_width, label=cfg, color=colors[i % len(colors)], edgecolor="black")
-        # Add value labels
+        bars = ax.bar(
+            x + offset,
+            vals,
+            width=bar_width,
+            label=cfg,
+            color=colors[i % len(colors)],
+            edgecolor="black",
+            alpha=0.9,
+        )
+        all_bars_info.append((i, cfg, bars))
+
+    # Expand y-limit headroom for staggered labels & leader lines
+    max_val = max(max(float(val) for val in v) for v in data_matrix.values()) if data_matrix else 1.0
+    ax.set_ylim(0, max_val * 1.35)
+
+    # Stagger offsets when configurations are clustered (prevents label collision on equal heights)
+    stagger_offsets = [8, 28, 48, 68] if len(configs) > 4 else [8, 24]
+
+    for i, cfg, bars in all_bars_info:
+        stagger_level = i % len(stagger_offsets)
+        y_offset = stagger_offsets[stagger_level] if len(configs) > 3 else 5
+
         for bar in bars:
             height = bar.get_height()
             if height > 0:
-                fmt = f"{height:.3f}s" if metric == "time" else f"{int(height)}"
-                ax.annotate(fmt,
-                            xy=(bar.get_x() + bar.get_width() / 2, height),
-                            xytext=(0, 3),
-                            textcoords="offset points",
-                            ha="center", va="bottom", fontsize=8, rotation=45 if len(graphs) > 4 else 0)
+                fmt = f"{height:.3f}s" if metric == "time" else f"{int(height):,}"
+                bar_x = bar.get_x() + bar.get_width() / 2
+
+                # Leader line connecting text to top of bar when raised
+                arrow_props = dict(
+                    arrowstyle="-",
+                    color="#555555",
+                    lw=0.8,
+                    linestyle=":",
+                    shrinkA=2,
+                    shrinkB=2,
+                ) if y_offset > 12 else None
+
+                ax.annotate(
+                    fmt,
+                    xy=(bar_x, height),
+                    xytext=(0, y_offset),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    fontsize=6.8,
+                    fontweight="bold",
+                    rotation=90,
+                    arrowprops=arrow_props,
+                )
 
     ax.set_xticks(x)
     ax.set_xticklabels(graphs, fontsize=10, fontweight="bold")
@@ -308,11 +337,11 @@ def visualize_benchmark_comparison(
         ax.set_ylabel("Solving Time (seconds)", fontsize=11, fontweight="bold")
         default_title = "Execution Time Comparison Across Configurations"
     else:
-        ax.set_ylabel("Number of CNF Clauses", fontsize=11, fontweight="bold")
+        ax.set_ylabel("Number of CNF Clauses / Constraints", fontsize=11, fontweight="bold")
         default_title = "Clause Complexity Comparison Across Configurations"
 
     ax.set_title(title or default_title, fontsize=13, fontweight="bold", pad=15)
-    ax.legend(frameon=True, shadow=True)
+    ax.legend(frameon=True, shadow=True, bbox_to_anchor=(1.02, 1), loc="upper left")
     ax.grid(True, axis="y", linestyle="--", alpha=0.6)
 
     plt.tight_layout()
@@ -322,6 +351,141 @@ def visualize_benchmark_comparison(
         out_file.parent.mkdir(parents=True, exist_ok=True)
         plt.savefig(out_file, dpi=200, bbox_inches="tight")
         print(f"[+] Saved benchmark chart to: {out_file.resolve()}")
+
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return True
+
+
+def visualize_speedup_comparison(
+    benchmark_data: List[Dict[str, Any]],
+    title: Optional[str] = None,
+    save_path: Optional[str] = None,
+    show: bool = False,
+) -> bool:
+    """Plot speedup ratio (Time_NoSym / Time_Sym) achieved by Symmetry Breaking.
+
+    Args:
+        benchmark_data: List of benchmark dicts containing 'graph', 'encoding', 'solver', 'symmetry', 'time'.
+        title: Plot title.
+        save_path: Destination path for saved image.
+        show: If True, opens GUI window.
+    """
+    if not HAS_MATPLOTLIB:
+        return False
+
+    if HAS_CNSPLOTS:
+        try:
+            cns.setup_matplotlib()
+        except Exception:
+            pass
+
+    import numpy as np
+
+    # Group times by (graph, encoding, solver) -> {True: time_sym, False: time_nosym}
+    grouped: Dict[Tuple[str, str, str], Dict[bool, float]] = {}
+    for d in benchmark_data:
+        g = d["graph"]
+        enc = d.get("encoding", "direct")
+        solv = d.get("solver", "glucose4")
+        sym_raw = d.get("symmetry", True)
+        if isinstance(sym_raw, str):
+            sym = sym_raw.strip().lower() in ("true", "1", "yes")
+        else:
+            sym = bool(sym_raw)
+        key = (g, enc, solv)
+        if key not in grouped:
+            grouped[key] = {}
+        grouped[key][sym] = float(d["time"])
+
+    # Compute speedup ratio
+    speedup_records = []
+    for (g, enc, solv), times in grouped.items():
+        if True in times and False in times and times[True] > 0:
+            ratio = times[False] / times[True]
+            speedup_records.append({
+                "graph": g,
+                "label": f"{enc.upper()}_{solv}",
+                "speedup": ratio,
+            })
+
+    if not speedup_records:
+        print("[!] Not enough symmetric pairs found to compute speedup.")
+        return False
+
+    graphs = sorted(list(set(r["graph"] for r in speedup_records)))
+    labels = sorted(list(set(r["label"] for r in speedup_records)))
+
+    matrix = {lbl: [0.0] * len(graphs) for lbl in labels}
+    for r in speedup_records:
+        g_idx = graphs.index(r["graph"])
+        lbl = r["label"]
+        matrix[lbl][g_idx] = r["speedup"]
+
+    x = np.arange(len(graphs))
+    bar_width = 0.8 / max(1, len(labels))
+
+    fig, ax = plt.subplots(figsize=(max(9, len(graphs) * 2), 5.5))
+    # Custom color palette: ORDER_glucose4 is explicitly gold/yellow (#f1c40f)
+    speedup_color_map = {
+        "order_glucose4": "#f1c40f",      # Vang tuoi / Gold Yellow theo yeu cau
+        "order_cadical153": "#1b9e77",    # Xanh luc / Teal
+        "direct_glucose4": "#2b5c8f",     # Xanh duong dam / Navy Blue
+        "direct_cadical153": "#d95f02",   # Cam do / Orange
+        "cpsat_cpsat": "#7570b3",         # Tim / Purple
+    }
+    fallback_colors = ["#2b5c8f", "#d95f02", "#1b9e77", "#7570b3", "#e7298a", "#66a61e"]
+
+    for i, lbl in enumerate(labels):
+        offset = (i - len(labels) / 2 + 0.5) * bar_width
+        vals = matrix[lbl]
+        bar_color = speedup_color_map.get(lbl.lower(), fallback_colors[i % len(fallback_colors)])
+        bars = ax.bar(
+            x + offset,
+            vals,
+            width=bar_width,
+            label=f"{lbl} Speedup",
+            color=bar_color,
+            edgecolor="black",
+        )
+        for bar in bars:
+            h = bar.get_height()
+            if h > 0:
+                ax.annotate(
+                    f"{h:.2f}x",
+                    xy=(bar.get_x() + bar.get_width() / 2, h),
+                    xytext=(0, 3),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    fontweight="bold",
+                )
+
+    ax.axhline(1.0, color="red", linestyle="--", linewidth=1.5, label="Baseline (1.0x - No Gain)")
+    ax.set_xticks(x)
+    ax.set_xticklabels(graphs, fontsize=10, fontweight="bold")
+    ax.set_xlabel("Benchmark Graphs", fontsize=11, fontweight="bold")
+    ax.set_ylabel("Speedup Ratio (T_nosym / T_sym)", fontsize=11, fontweight="bold")
+    ax.set_title(
+        title or "Symmetry Breaking Acceleration Ratio (Speedup >= 1.0x)",
+        fontsize=13,
+        fontweight="bold",
+        pad=15,
+    )
+    ax.legend(frameon=True, shadow=True)
+    ax.grid(True, axis="y", linestyle="--", alpha=0.6)
+
+    plt.tight_layout()
+
+    if save_path:
+        out_file = Path(save_path)
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(out_file, dpi=200, bbox_inches="tight")
+        print(f"[+] Saved speedup chart to: {out_file.resolve()}")
 
     if show:
         plt.show()
