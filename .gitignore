@@ -231,3 +231,14 @@ __marimo__/
 *.blg
 
 .agents/
+# LaTeX auxiliary filesblg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.abs
+*.nav
+*.snm
+*.vrb

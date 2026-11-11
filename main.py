@@ -5,7 +5,7 @@ Usage:
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --solver cadical153
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding order
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding cpsat
-    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --visualize solution_jgl009.png
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --visualize docs/solution_jgl009.png
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --check-k 1
 """
 
@@ -94,12 +94,18 @@ def parse_args():
         help="Export CNF formula for the target k (specified by --check-k) to a DIMACS file.",
     )
     parser.add_argument(
+        "--time-limit",
+        type=float,
+        default=100.0,
+        help="Time limit in seconds for CP-SAT solver. Default: 100.0s",
+    )
+    parser.add_argument(
         "--visualize",
         type=str,
         nargs="?",
-        const="solution.png",
+        const="docs/solution.png",
         default=None,
-        help="Path to save graphical visualization of the solution (e.g., --visualize solution.png).",
+        help="Path to save graphical visualization of the solution (e.g., --visualize docs/solution.png).",
     )
     parser.add_argument(
         "--show-plot",
@@ -162,7 +168,12 @@ def main():
             print(f"    --> Solving {inf['filename']:15s} (|V|={inf['num_vertices']:3d}, |E|={inf['num_edges']:4d}, D={inf['density']:.4f}) ... ", end="", flush=True)
 
             if is_cpsat:
-                solver_inst = AntibandwidthCPSolver(g, break_symmetry=break_sym, verbose=False)
+                solver_inst = AntibandwidthCPSolver(
+                    g,
+                    break_symmetry=break_sym,
+                    time_limit_seconds=getattr(args, "time_limit", 100.0),
+                    verbose=False,
+                )
                 mth = "direct_optimize" if args.method == "direct_optimize" else "binary_search"
                 res = solver_inst.solve(method=mth)
             else:
@@ -247,7 +258,12 @@ def main():
             return
 
         if is_cpsat:
-            cp_solver = AntibandwidthCPSolver(graph, break_symmetry=break_sym, verbose=False)
+            cp_solver = AntibandwidthCPSolver(
+                graph,
+                break_symmetry=break_sym,
+                time_limit_seconds=getattr(args, "time_limit", 100.0),
+                verbose=False,
+            )
             is_sat, labeling, elapsed, n_clauses = cp_solver.check_sat(target_k)
             verifier_fn = cp_solver.verify_solution
         else:
@@ -287,7 +303,12 @@ def main():
 
     # Mode 2: Search for optimal Antibandwidth B*(G)
     if is_cpsat:
-        cp_solver = AntibandwidthCPSolver(graph, break_symmetry=break_sym, verbose=True)
+        cp_solver = AntibandwidthCPSolver(
+            graph,
+            break_symmetry=break_sym,
+            time_limit_seconds=getattr(args, "time_limit", 100.0),
+            verbose=True,
+        )
         method = "direct_optimize" if args.method == "direct_optimize" else "binary_search"
         results = cp_solver.solve(method=method)
     else:
