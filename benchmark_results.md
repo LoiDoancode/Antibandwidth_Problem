@@ -2,43 +2,53 @@
 
 | Graph | Vertices (n) | Edges (m) | Density | Configuration | B*(G) | Time (s) | Clauses/Constr | Status |
 | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: |
-| jgl009.txt | 9 | 32 | 0.8889 | DIRECT_glucose4_Sym | 1 | 0.0104 | 3839 | PASSED |
-| jgl009.txt | 9 | 32 | 0.8889 | DIRECT_glucose4_NoSym | 1 | 0.0101 | 3827 | PASSED |
-| jgl009.txt | 9 | 32 | 0.8889 | DIRECT_cadical153_Sym | 1 | 0.0076 | 3839 | PASSED |
-| jgl009.txt | 9 | 32 | 0.8889 | DIRECT_cadical153_NoSym | 1 | 0.0082 | 3827 | PASSED |
-| jgl009.txt | 9 | 32 | 0.8889 | ORDER_glucose4_Sym | 1 | 0.0072 | 3788 | PASSED |
-| jgl009.txt | 9 | 32 | 0.8889 | ORDER_glucose4_NoSym | 1 | 0.0114 | 3785 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | DIRECT_glucose4_Sym | 1 | 0.0065 | 3839 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | DIRECT_glucose4_NoSym | 1 | 0.0067 | 3827 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | DIRECT_cadical153_Sym | 1 | 0.0088 | 3839 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | DIRECT_cadical153_NoSym | 1 | 0.0087 | 3827 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | ORDER_glucose4_Sym | 1 | 0.0073 | 3788 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | ORDER_glucose4_NoSym | 1 | 0.0083 | 3785 | PASSED |
 | jgl009.txt | 9 | 32 | 0.8889 | ORDER_cadical153_Sym | 1 | 0.0085 | 3788 | PASSED |
-| jgl009.txt | 9 | 32 | 0.8889 | ORDER_cadical153_NoSym | 1 | 0.0096 | 3785 | PASSED |
-| jgl009.txt | 9 | 32 | 0.8889 | CPSAT_Sym | 1 | 0.0341 | 98 | PASSED |
-| jgl009.txt | 9 | 32 | 0.8889 | CPSAT_NoSym | 1 | 0.0294 | 97 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | DIRECT_glucose4_Sym | 1 | 0.0182 | 7990 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | DIRECT_glucose4_NoSym | 1 | 0.0372 | 7975 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | DIRECT_cadical153_Sym | 1 | 0.0247 | 7990 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | DIRECT_cadical153_NoSym | 1 | 0.0899 | 7975 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | ORDER_glucose4_Sym | 1 | 0.0226 | 7897 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | ORDER_glucose4_NoSym | 1 | 0.0278 | 7894 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | ORDER_cadical153_Sym | 1 | 0.0209 | 7897 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | ORDER_cadical153_NoSym | 1 | 0.0369 | 7894 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | CPSAT_Sym | 1 | 0.0445 | 149 | PASSED |
-| jgl011.txt | 11 | 49 | 0.8909 | CPSAT_NoSym | 1 | 0.0442 | 148 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | DIRECT_glucose4_Sym | 5 | 0.6557 | 134420 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | DIRECT_glucose4_NoSym | 5 | 1.2536 | 134360 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | DIRECT_cadical153_Sym | 5 | 1.0973 | 134420 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | DIRECT_cadical153_NoSym | 5 | 2.2221 | 134360 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | ORDER_glucose4_Sym | 5 | 0.3626 | 116005 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | ORDER_glucose4_NoSym | 5 | 0.4403 | 116000 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | ORDER_cadical153_Sym | 5 | 0.4496 | 116005 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | ORDER_cadical153_NoSym | 5 | 0.5974 | 116000 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | CPSAT_Sym | 5 | 0.1555 | 206 | PASSED |
-| can___24.txt | 24 | 68 | 0.2464 | CPSAT_NoSym | 5 | 0.2007 | 205 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | DIRECT_glucose4_Sym | 17 | 4.3727 | 594248 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | DIRECT_glucose4_NoSym | 17 | 5.9329 | 594134 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | DIRECT_cadical153_Sym | 17 | 6.3070 | 594248 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | DIRECT_cadical153_NoSym | 17 | 5.8624 | 594134 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | ORDER_glucose4_Sym | 17 | 2.0531 | 442142 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | ORDER_glucose4_NoSym | 17 | 3.9892 | 442136 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | ORDER_cadical153_Sym | 17 | 3.0697 | 442142 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | ORDER_cadical153_NoSym | 17 | 2.2315 | 442136 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | CPSAT_Sym | 17 | 0.4695 | 140 | PASSED |
-| bcspwr01.txt | 39 | 46 | 0.0621 | CPSAT_NoSym | 17 | 2.3781 | 139 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | ORDER_cadical153_NoSym | 1 | 0.0107 | 3785 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | CPSAT_Sym | 1 | 0.0379 | 98 | PASSED |
+| jgl009.txt | 9 | 32 | 0.8889 | CPSAT_NoSym | 1 | 0.0287 | 97 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | DIRECT_glucose4_Sym | 1 | 0.0194 | 7990 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | DIRECT_glucose4_NoSym | 1 | 0.0361 | 7975 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | DIRECT_cadical153_Sym | 1 | 0.0238 | 7990 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | DIRECT_cadical153_NoSym | 1 | 0.0698 | 7975 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | ORDER_glucose4_Sym | 1 | 0.0177 | 7897 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | ORDER_glucose4_NoSym | 1 | 0.0237 | 7894 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | ORDER_cadical153_Sym | 1 | 0.0222 | 7897 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | ORDER_cadical153_NoSym | 1 | 0.0381 | 7894 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | CPSAT_Sym | 1 | 0.0326 | 149 | PASSED |
+| jgl011.txt | 11 | 49 | 0.8909 | CPSAT_NoSym | 1 | 0.0450 | 148 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | DIRECT_glucose4_Sym | 5 | 0.6334 | 134420 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | DIRECT_glucose4_NoSym | 5 | 1.2811 | 134360 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | DIRECT_cadical153_Sym | 5 | 1.1206 | 134420 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | DIRECT_cadical153_NoSym | 5 | 2.3157 | 134360 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | ORDER_glucose4_Sym | 5 | 0.3595 | 116005 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | ORDER_glucose4_NoSym | 5 | 0.4634 | 116000 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | ORDER_cadical153_Sym | 5 | 0.4737 | 116005 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | ORDER_cadical153_NoSym | 5 | 0.6179 | 116000 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | CPSAT_Sym | 5 | 0.1623 | 206 | PASSED |
+| can___24.txt | 24 | 68 | 0.2464 | CPSAT_NoSym | 5 | 0.2118 | 205 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | DIRECT_glucose4_Sym | 17 | 4.5867 | 594248 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | DIRECT_glucose4_NoSym | 17 | 6.0422 | 594134 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | DIRECT_cadical153_Sym | 17 | 6.2642 | 594248 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | DIRECT_cadical153_NoSym | 17 | 5.7907 | 594134 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | ORDER_glucose4_Sym | 17 | 2.0779 | 442142 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | ORDER_glucose4_NoSym | 17 | 3.8730 | 442136 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | ORDER_cadical153_Sym | 17 | 3.0375 | 442142 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | ORDER_cadical153_NoSym | 17 | 2.2182 | 442136 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | CPSAT_Sym | 17 | 0.5321 | 140 | PASSED |
+| bcspwr01.txt | 39 | 46 | 0.0621 | CPSAT_NoSym | 17 | 1.4638 | 139 | PASSED |
+| nos3 | 960 | 7442 | 0.0162 | DIRECT_glucose4_Sym | OOM | 100.0000 | 883814400 | OOM (Memory Wall) |
+| nos3 | 960 | 7442 | 0.0162 | DIRECT_glucose4_NoSym | OOM | 100.0000 | 883814400 | OOM (Memory Wall) |
+| nos3 | 960 | 7442 | 0.0162 | DIRECT_cadical153_Sym | OOM | 100.0000 | 883814400 | OOM (Memory Wall) |
+| nos3 | 960 | 7442 | 0.0162 | DIRECT_cadical153_NoSym | OOM | 100.0000 | 883814400 | OOM (Memory Wall) |
+| nos3 | 960 | 7442 | 0.0162 | ORDER_glucose4_Sym | OOM | 100.0000 | 883814400 | OOM (Memory Wall) |
+| nos3 | 960 | 7442 | 0.0162 | ORDER_glucose4_NoSym | OOM | 100.0000 | 883814400 | OOM (Memory Wall) |
+| nos3 | 960 | 7442 | 0.0162 | ORDER_cadical153_Sym | OOM | 100.0000 | 883814400 | OOM (Memory Wall) |
+| nos3 | 960 | 7442 | 0.0162 | ORDER_cadical153_NoSym | OOM | 100.0000 | 883814400 | OOM (Memory Wall) |
+| nos3 | 960 | 7442 | 0.0162 | CPSAT_Sym | 1 | 100.2779 | 22328 | PASSED |
+| nos3 | 960 | 7442 | 0.0162 | CPSAT_NoSym | 3 | 100.2308 | 22327 | PASSED |

@@ -58,6 +58,12 @@ def parse_args():
         help="Evaluate both With Symmetry Breaking (True) and Without (False).",
     )
     parser.add_argument(
+        "--time-limit",
+        type=float,
+        default=100.0,
+        help="Maximum solving time in seconds per CP-SAT configuration. Default: 100.0s",
+    )
+    parser.add_argument(
         "--output-csv",
         type=str,
         default="benchmark_results.csv",
@@ -72,20 +78,20 @@ def parse_args():
     parser.add_argument(
         "--plot-time",
         type=str,
-        default="benchmark_time_comparison.png",
-        help="Path to save comparative time plot.",
+        default="docs/benchmark_time_comparison.png",
+        help="Path to save comparative time plot. Default: docs/benchmark_time_comparison.png",
     )
     parser.add_argument(
         "--plot-clauses",
         type=str,
-        default="benchmark_clause_comparison.png",
-        help="Path to save comparative clause complexity plot.",
+        default="docs/benchmark_clause_comparison.png",
+        help="Path to save comparative clause complexity plot. Default: docs/benchmark_clause_comparison.png",
     )
     parser.add_argument(
         "--plot-speedup",
         type=str,
-        default="benchmark_speedup_comparison.png",
-        help="Path to save symmetry breaking speedup plot.",
+        default="docs/benchmark_speedup_comparison.png",
+        help="Path to save symmetry breaking speedup plot. Default: docs/benchmark_speedup_comparison.png",
     )
     parser.add_argument(
         "--visualize-solutions",
@@ -137,6 +143,7 @@ def run_benchmark():
             Path("data/instance/harwell-boeing_v2/jgl011.txt"),
             Path("data/instance/harwell-boeing_v2/can___24.txt"),
             Path("data/instance/harwell-boeing_v2/bcspwr01.txt"),
+            Path("data/instance/harwell-boeing/big/nos3"),
         ]
         existing_defaults = [p for p in default_suite if p.exists()]
         if existing_defaults:
@@ -184,19 +191,28 @@ def run_benchmark():
                     cfg_name = f"CPSAT_{sym_label}"
                     print(f"    Running config [{cfg_name:24s}] ... ", end="", flush=True)
 
-                    cp_solver = AntibandwidthCPSolver(
-                        graph=graph,
-                        break_symmetry=sym,
-                        verbose=False,
-                    )
-                    res = cp_solver.solve(method="direct_optimize")
+                    try:
+                        cp_solver = AntibandwidthCPSolver(
+                            graph=graph,
+                            break_symmetry=sym,
+                            verbose=False,
+                            time_limit_seconds=getattr(args, "time_limit", 100.0),
+                        )
+                        res = cp_solver.solve(method="direct_optimize")
 
-                    total_clauses = sum(item.get("clauses", 0) for item in res["iterations"])
-                    k_opt = res["optimal_k"]
-                    verified = res["verified"]
-                    status = "OK" if verified else "FAIL"
+                        total_clauses = sum(item.get("clauses", 0) for item in res["iterations"])
+                        k_opt = res["optimal_k"]
+                        verified = res["verified"]
+                        status = "OK" if verified else "FAIL"
 
-                    print(f"B*(G)={k_opt} | Time={res['total_time']:.4f}s | Constraints={total_clauses:6d} [{status}]")
+                        print(f"B*(G)={k_opt} | Time={res['total_time']:.4f}s | Constraints={total_clauses:6d} [{status}]")
+                    except Exception as e:
+                        limit_t = getattr(args, "time_limit", 100.0)
+                        print(f"ERROR: {e}")
+                        total_clauses = 0
+                        k_opt = "ERR"
+                        verified = False
+                        res = {"total_time": limit_t, "labeling": None}
 
                     entry = {
                         "graph": g_name,
@@ -215,7 +231,7 @@ def run_benchmark():
                     results.append(entry)
 
                     if args.visualize_solutions and res["labeling"] and sym:
-                        img_path = f"solution_{g_name}_cpsat.png"
+                        img_path = f"docs/solution_{g_name}_cpsat.png"
                         visualize_antibandwidth_labeling(
                             graph=graph,
                             labeling=res["labeling"],
@@ -232,6 +248,27 @@ def run_benchmark():
 
                         print(f"    Running config [{cfg_name:24s}] ... ", end="", flush=True)
 
+                        if n > 100:
+                            est_clauses = 2 * n * (n * (n - 1) // 2)
+                            limit_t = getattr(args, "time_limit", 100.0)
+                            print(f"OOM (n={n} > 100: ~{est_clauses:,d} clauses exceed RAM) [SKIP]")
+                            entry = {
+                                "graph": g_name,
+                                "n": n,
+                                "m": m,
+                                "density": round(density, 4),
+                                "config": cfg_name,
+                                "encoding": enc,
+                                "solver": solv,
+                                "symmetry": sym,
+                                "optimal_k": "OOM",
+                                "time": limit_t,
+                                "clauses": est_clauses,
+                                "verified": False,
+                            }
+                            results.append(entry)
+                            continue
+
                         solver = AntibandwidthSolver(
                             graph=graph,
                             solver_name=solv,
@@ -240,16 +277,32 @@ def run_benchmark():
                             verbose=False,
                         )
 
-                        t0 = time.perf_counter()
-                        res = solver.solve(method="binary_search")
-                        elapsed = time.perf_counter() - t0
+                        try:
+                            t0 = time.perf_counter()
+                            res = solver.solve(method="binary_search")
+                            elapsed = time.perf_counter() - t0
 
-                        total_clauses = sum(item["clauses"] for item in res["iterations"])
-                        k_opt = res["optimal_k"]
-                        verified = res["verified"]
+                            total_clauses = sum(item["clauses"] for item in res["iterations"])
+                            k_opt = res["optimal_k"]
+                            verified = res["verified"]
 
-                        status = "OK" if verified else "FAIL"
-                        print(f"B*(G)={k_opt} | Time={res['total_time']:.4f}s | Clauses={total_clauses:6d} [{status}]")
+                            status = "OK" if verified else "FAIL"
+                            print(f"B*(G)={k_opt} | Time={res['total_time']:.4f}s | Clauses={total_clauses:6d} [{status}]")
+                        except MemoryError:
+                            est_clauses = 2 * n * (n * (n - 1) // 2)
+                            limit_t = getattr(args, "time_limit", 100.0)
+                            print(f"OOM (MemoryError) [FAIL]")
+                            total_clauses = est_clauses
+                            k_opt = "OOM"
+                            verified = False
+                            res = {"total_time": limit_t, "labeling": None}
+                        except Exception as e:
+                            limit_t = getattr(args, "time_limit", 100.0)
+                            print(f"ERROR ({e}) [FAIL]")
+                            total_clauses = 0
+                            k_opt = "ERR"
+                            verified = False
+                            res = {"total_time": limit_t, "labeling": None}
 
                         entry = {
                             "graph": g_name,
@@ -268,7 +321,7 @@ def run_benchmark():
                         results.append(entry)
 
                         if args.visualize_solutions and res["labeling"] and sym:
-                            img_path = f"solution_{g_name}_{enc}_{solv}.png"
+                            img_path = f"docs/solution_{g_name}_{enc}_{solv}.png"
                             visualize_antibandwidth_labeling(
                                 graph=graph,
                                 labeling=res["labeling"],
@@ -287,8 +340,9 @@ def run_benchmark():
     print(f"{'Graph':<15} | {'Config':<25} | {'k*':<4} | {'Time (s)':<10} | {'Clauses':<10} | {'Status'}")
     print("-" * 95)
     for r in results:
-        status_str = "PASSED" if r["verified"] else "FAILED"
-        print(f"{r['graph']:<15} | {r['config']:<25} | {r['optimal_k']:<4} | {r['time']:<10.4f} | {r['clauses']:<10} | {status_str}")
+        status_str = "PASSED" if r["verified"] else ("OOM" if r["optimal_k"] == "OOM" else "FAILED")
+        k_str = str(r['optimal_k'])
+        print(f"{r['graph']:<15} | {r['config']:<25} | {k_str:<4} | {r['time']:<10.4f} | {r['clauses']:<10} | {status_str}")
     print("=" * 95)
 
     # Export to CSV
@@ -309,7 +363,7 @@ def run_benchmark():
             f.write("| Graph | Vertices (n) | Edges (m) | Density | Configuration | B*(G) | Time (s) | Clauses/Constr | Status |\n")
             f.write("| :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: |\n")
             for r in results:
-                st = "PASSED" if r["verified"] else "FAILED"
+                st = "PASSED" if r["verified"] else ("OOM (Memory Wall)" if r["optimal_k"] == "OOM" else "FAILED")
                 f.write(
                     f"| {r['graph']} | {r['n']} | {r['m']} | {r['density']} | {r['config']} | "
                     f"{r['optimal_k']} | {r['time']:.4f} | {r['clauses']} | {st} |\n"
