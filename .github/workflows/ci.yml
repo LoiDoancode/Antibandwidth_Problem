@@ -43,9 +43,10 @@ jobs:
 
       - name: Run Pytest test suite
         run: |
-          pytest tests/
+          python -m pytest tests/
 
-      - name: CLI Smoke Test (Sample Graphs)
+      - name: CLI Smoke Test (Harwell-Boeing Instances)
         run: |
-          python main.py -i data/sample_p6.mtx --check-k 1 --solver glucose4
-          python main.py -i data/sample_c5.mtx --check-k 1 --encoding order --solver glucose4
+          python main.py -i data/instance/harwell-boeing_v2/jgl009.txt --check-k 1 --solver glucose4
+          python main.py -i data/instance/harwell-boeing_v2/jgl009.txt --check-k 1 --encoding order --solver glucose4
+          python main.py -i data/instance/harwell-boeing_v2/jgl009.txt --check-k 1 --encoding cpsat
