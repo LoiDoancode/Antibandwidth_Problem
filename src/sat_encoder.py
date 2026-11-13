@@ -9,7 +9,10 @@ import networkx as nx
 
 try:
     from pysat.formula import CNF
+    from pysat.card import CardEnc, EncType
+    HAS_PYSAT_CARD = True
 except ImportError:
+    HAS_PYSAT_CARD = False
     # Minimal fallback CNF container if python-sat is not installed yet
     class CNF:
         def __init__(self):
@@ -32,20 +35,48 @@ except ImportError:
             return "\n".join(out)
 
 
+SUPPORTED_AMO_ENCODINGS = (
+    "pairwise",
+    "seqcounter",
+    "commander",
+    "totalizer",
+    "ladder",
+    "bitwise",
+)
+
+
 class AntibandwidthSATEncoder:
     """Encodes the Antibandwidth decision problem for a graph G and target k into CNF."""
 
-    def __init__(self, graph: nx.Graph, break_symmetry: bool = True):
+    def __init__(
+        self,
+        graph: nx.Graph,
+        break_symmetry: bool = True,
+        amo_encoding: str = "pairwise",
+    ):
         """
         Args:
             graph: Undirected NetworkX graph.
             break_symmetry: If True, adds symmetry-breaking constraints to eliminate
                             reflection symmetry (f(v) vs n + 1 - f(v)).
+            amo_encoding: At-Most-One constraint encoding for bijectivity:
+                          'pairwise' (O(n^2) clauses per constraint, no aux vars),
+                          'seqcounter' (Sequential Counter via PySAT CardEnc, O(n) clauses),
+                          'commander' (Commander grouping AMO, O(n) clauses),
+                          'totalizer', 'ladder', or 'bitwise' (via PySAT CardEnc).
         """
+        amo_key = amo_encoding.lower()
+        if amo_key not in SUPPORTED_AMO_ENCODINGS:
+            raise ValueError(
+                f"Unsupported amo_encoding '{amo_encoding}'. "
+                f"Choose from: {', '.join(SUPPORTED_AMO_ENCODINGS)}"
+            )
+
         self.graph = graph
         self.nodes = list(graph.nodes())
         self.n = len(self.nodes)
         self.break_symmetry = break_symmetry
+        self.amo_encoding = amo_key
 
         # Map graph nodes to internal 0-based indices [0, n-1] for robustness
         self.node_to_idx = {node: idx for idx, node in enumerate(self.nodes)}
@@ -83,6 +114,73 @@ class AntibandwidthSATEncoder:
         p = (idx % self.n) + 1
         return v, p
 
+    @staticmethod
+    def _add_pairwise_amo(cnf: CNF, lits: List[int]) -> None:
+        """Add pairwise At-Most-One clauses for a literal list: O(m^2) clauses, 0 aux vars."""
+        m = len(lits)
+        for i in range(m):
+            for j in range(i + 1, m):
+                cnf.append([-lits[i], -lits[j]])
+
+    def _add_commander_amo(self, cnf: CNF, lits: List[int], top_id: int, group_size: int = 3) -> int:
+        """Add Commander At-Most-One encoding (Klieber & Kwon, 2007): O(m) clauses & aux vars."""
+        if len(lits) <= group_size:
+            self._add_pairwise_amo(cnf, lits)
+            return top_id
+
+        commanders: List[int] = []
+        for idx in range(0, len(lits), group_size):
+            group = lits[idx : idx + group_size]
+            if len(group) == 1:
+                commanders.append(group[0])
+                continue
+
+            top_id += 1
+            cmd = top_id
+            commanders.append(cmd)
+
+            # At most one literal in the group can be True
+            self._add_pairwise_amo(cnf, group)
+            # cmd <=> OR(group): (x -> cmd) and (cmd -> OR(group))
+            for lit in group:
+                cnf.append([-lit, cmd])
+            cnf.append([-cmd] + group)
+
+        return self._add_commander_amo(cnf, commanders, top_id, group_size=group_size)
+
+    def _add_amo(self, cnf: CNF, lits: List[int], top_id: int) -> int:
+        """Encode At-Most-One constraint on `lits` using the configured `amo_encoding`."""
+        if len(lits) <= 1:
+            return top_id
+
+        if self.amo_encoding == "pairwise":
+            self._add_pairwise_amo(cnf, lits)
+            return top_id
+
+        if self.amo_encoding == "commander":
+            return self._add_commander_amo(cnf, lits, top_id)
+
+        if not HAS_PYSAT_CARD:
+            raise RuntimeError(
+                f"python-sat is required for amo_encoding='{self.amo_encoding}'. "
+                "Run: pip install python-sat"
+            )
+
+        enc_map = {
+            "seqcounter": EncType.seqcounter,
+            "totalizer": EncType.totalizer,
+            "ladder": EncType.ladder,
+            "bitwise": EncType.bitwise,
+        }
+        card_cnf = CardEnc.atmost(
+            lits=lits,
+            bound=1,
+            top_id=top_id,
+            encoding=enc_map[self.amo_encoding],
+        )
+        cnf.extend(card_cnf.clauses)
+        return max(top_id, card_cnf.nv)
+
     def encode(self, k: int) -> CNF:
         """Construct the CNF formula for the antibandwidth target k.
 
@@ -98,6 +196,8 @@ class AntibandwidthSATEncoder:
         if n <= 1:
             return cnf
 
+        top_id = n * n
+
         # -------------------------------------------------------------
         # 1. Bijective mapping constraints
         # -------------------------------------------------------------
@@ -107,15 +207,13 @@ class AntibandwidthSATEncoder:
 
         # 1b. At-most-one (AMO) position for each vertex v
         for v in range(n):
-            for p in range(1, n + 1):
-                for q in range(p + 1, n + 1):
-                    cnf.append([-self.var(v, p), -self.var(v, q)])
+            vertex_lits = [self.var(v, p) for p in range(1, n + 1)]
+            top_id = self._add_amo(cnf, vertex_lits, top_id)
 
         # 1c. At-most-one (AMO) vertex for each position p
         for p in range(1, n + 1):
-            for u in range(n):
-                for v in range(u + 1, n):
-                    cnf.append([-self.var(u, p), -self.var(v, p)])
+            pos_lits = [self.var(u, p) for u in range(n)]
+            top_id = self._add_amo(cnf, pos_lits, top_id)
 
         # -------------------------------------------------------------
         # 2. Antibandwidth Distance Constraints:
@@ -143,6 +241,7 @@ class AntibandwidthSATEncoder:
             for p in range(half + 1, n + 1):
                 cnf.append([-self.var(self.pivot_vertex, p)])
 
+        cnf.nv = max(getattr(cnf, "nv", 0), top_id)
         return cnf
 
     def decode_model(self, model: List[int]) -> Dict[Any, int]:
@@ -155,17 +254,30 @@ class AntibandwidthSATEncoder:
                 labeling[orig_node] = p
         return labeling
 
-    def get_stats(self, k: int) -> Dict[str, int]:
-        """Compute theoretical counts of variables and clauses for target k.
+    def get_stats(self, k: int) -> Dict[str, Any]:
+        """Compute counts of variables and clauses for target k.
 
         Returns:
             Dictionary with breakdown of variables and clauses.
         """
         n = self.n
-        num_vars = n * n
+        base_vars = n * n
         alo_vertex = n
-        amo_vertex = n * (n * (n - 1) // 2)
-        amo_position = n * (n * (n - 1) // 2)
+
+        if self.amo_encoding == "pairwise":
+            num_vars = base_vars
+            amo_vertex = n * (n * (n - 1) // 2)
+            amo_position = n * (n * (n - 1) // 2)
+        else:
+            tmp_cnf = CNF()
+            top_id = base_vars
+            for v in range(n):
+                top_id = self._add_amo(tmp_cnf, [self.var(v, p) for p in range(1, n + 1)], top_id)
+            amo_vertex = len(tmp_cnf.clauses)
+            for p in range(1, n + 1):
+                top_id = self._add_amo(tmp_cnf, [self.var(u, p) for u in range(n)], top_id)
+            amo_position = len(tmp_cnf.clauses) - amo_vertex
+            num_vars = top_id
 
         num_dist_clauses = 0
         if k > 1:
@@ -182,7 +294,9 @@ class AntibandwidthSATEncoder:
             "num_nodes": n,
             "num_edges": len(self.edges),
             "target_k": k,
+            "amo_encoding": self.amo_encoding,
             "num_variables": num_vars,
+            "aux_variables": num_vars - base_vars,
             "alo_vertex_clauses": alo_vertex,
             "amo_vertex_clauses": amo_vertex,
             "amo_position_clauses": amo_position,
@@ -204,7 +318,7 @@ class AntibandwidthSATEncoder:
             if hasattr(cnf, "to_dimacs"):
                 f.write(cnf.to_dimacs())
             else:
-                num_vars = self.n * self.n
+                num_vars = getattr(cnf, "nv", self.n * self.n)
                 f.write(f"p cnf {num_vars} {len(cnf.clauses)}\n")
                 for c in cnf.clauses:
                     f.write(" ".join(map(str, c)) + " 0\n")

@@ -84,6 +84,37 @@ class TestDirectEncoder:
         assert file_path.exists()
         assert file_path.stat().st_size > 0
 
+    def test_invalid_amo_encoding_raises(self):
+        G = nx.path_graph(4)
+        with pytest.raises(ValueError):
+            AntibandwidthSATEncoder(G, amo_encoding="unknown_amo")
+
+    @pytest.mark.parametrize("amo_encoding", ["seqcounter", "commander", "totalizer", "ladder", "bitwise"])
+    def test_advanced_amo_encodings_clauses_and_vars(self, amo_encoding, tmp_path):
+        # For n = 10, pairwise AMO needs 2 * 10 * 45 = 900 clauses
+        G = nx.path_graph(10)
+        enc_pw = AntibandwidthSATEncoder(G, break_symmetry=True, amo_encoding="pairwise")
+        enc_adv = AntibandwidthSATEncoder(G, break_symmetry=True, amo_encoding=amo_encoding)
+
+        cnf_adv = enc_adv.encode(k=3)
+        stats_pw = enc_pw.get_stats(k=3)
+        stats_adv = enc_adv.get_stats(k=3)
+
+        assert cnf_adv.nv == stats_adv["num_variables"]
+        assert stats_adv["aux_variables"] > 0
+        assert stats_adv["total_clauses"] == len(cnf_adv.clauses)
+        # Sequential Counter and Commander strictly reduce AMO clause count vs Pairwise at n=10
+        if amo_encoding in ("seqcounter", "commander"):
+            assert (
+                stats_adv["amo_vertex_clauses"] + stats_adv["amo_position_clauses"]
+                < stats_pw["amo_vertex_clauses"] + stats_pw["amo_position_clauses"]
+            )
+
+        dimacs_path = tmp_path / f"test_{amo_encoding}.cnf"
+        enc_adv.export_dimacs(k=3, filepath=str(dimacs_path))
+        header = dimacs_path.read_text(encoding="utf-8").splitlines()[0]
+        assert header.startswith(f"p cnf {cnf_adv.nv} {len(cnf_adv.clauses)}")
+
 
 
 class TestOrderEncoder:

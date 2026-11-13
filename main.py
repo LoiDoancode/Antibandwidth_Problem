@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.graph_loader import load_graph, resolve_graph_path
-from src.sat_encoder import AntibandwidthSATEncoder
+from src.sat_encoder import AntibandwidthSATEncoder, SUPPORTED_AMO_ENCODINGS
 from src.order_encoder import AntibandwidthOrderEncoder
 from src.solver import AntibandwidthSolver
 from src.cp_solver import AntibandwidthCPSolver, HAS_ORTOOLS
@@ -61,7 +61,14 @@ def parse_args():
         type=str,
         choices=["direct", "order", "cpsat"],
         default="direct",
-        help="Encoding / formulation: 'direct' (Pairwise), 'order' (Order Encoding), or 'cpsat' (Google OR-Tools CP-SAT). Default: direct",
+        help="Encoding / formulation: 'direct' (Pairwise/CardEnc), 'order' (Order Encoding), or 'cpsat' (Google OR-Tools CP-SAT). Default: direct",
+    )
+    parser.add_argument(
+        "--amo-encoding",
+        type=str,
+        choices=list(SUPPORTED_AMO_ENCODINGS),
+        default="pairwise",
+        help="AMO encoding for Direct SAT ('pairwise', 'seqcounter', 'commander', 'totalizer', 'ladder', 'bitwise'). Default: pairwise",
     )
     parser.add_argument(
         "--external-solver",
@@ -181,6 +188,7 @@ def main():
                     g,
                     solver_name=args.solver,
                     encoding=args.encoding,
+                    amo_encoding=args.amo_encoding,
                     break_symmetry=break_sym,
                     external_solver=args.external_solver,
                     verbose=False,
@@ -252,7 +260,11 @@ def main():
             if args.encoding == "order":
                 encoder = AntibandwidthOrderEncoder(graph, break_symmetry=break_sym)
             else:
-                encoder = AntibandwidthSATEncoder(graph, break_symmetry=break_sym)
+                encoder = AntibandwidthSATEncoder(
+                    graph,
+                    break_symmetry=break_sym,
+                    amo_encoding=args.amo_encoding,
+                )
             encoder.export_dimacs(target_k, args.export_dimacs)
             print(f"[+] Exported DIMACS CNF to: {args.export_dimacs}")
             return
@@ -271,6 +283,7 @@ def main():
                 graph,
                 solver_name=args.solver,
                 encoding=args.encoding,
+                amo_encoding=args.amo_encoding,
                 break_symmetry=break_sym,
                 external_solver=args.external_solver,
                 verbose=False,
@@ -316,6 +329,7 @@ def main():
             graph,
             solver_name=args.solver,
             encoding=args.encoding,
+            amo_encoding=args.amo_encoding,
             break_symmetry=break_sym,
             external_solver=args.external_solver,
             verbose=True,
