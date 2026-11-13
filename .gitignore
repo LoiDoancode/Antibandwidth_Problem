@@ -218,3 +218,27 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# LaTeX auxiliary files
+*.aux
+*.abs
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+*.bbl
+*.blg
+
+.agents/
+# LaTeX auxiliary filesblg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.abs
+*.nav
+*.snm
+*.vrb

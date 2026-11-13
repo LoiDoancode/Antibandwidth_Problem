@@ -130,26 +130,21 @@ class AntibandwidthOrderEncoder:
 
         # -------------------------------------------------------------
         # 3. Antibandwidth Distance Constraints: |f(u) - f(v)| >= k
-        # If f(u) <= p and f(v) > p, then f(v) >= p + k (i.e. NOT y_{v, p+k-1}):
-        # (y_{u, p} AND NOT y_{v, p}) -> NOT y_{v, p+k-1}
-        # === NOT y_{u, p} OR y_{v, p} OR NOT y_{v, p+k-1}
+        # If f(u) == p and f(v) > p, then f(v) >= p + k (i.e. NOT y_{v, p+k-1}):
+        # - For p = 1: f(u) == 1 <=> y_{u, 1}. Clause: NOT y_{u, 1} OR y_{v, 1} OR NOT y_{v, k}
+        # - For 1 < p <= n - k: NOT y_{u, p} OR y_{u, p-1} OR y_{v, p} OR NOT y_{v, p+k-1}
         # By symmetry, this applies when swapping u and v.
-        #
-        # For p in [1, n-k]:
-        #   NOT y_{u, p} OR y_{v, p} OR NOT y_{v, p+k-1}
-        #   NOT y_{v, p} OR y_{u, p} OR NOT y_{u, p+k-1}
-        #
-        # For boundary positions where |p - q| < k:
-        # Also forbid adjacent vertices taking values with difference < k:
         # -------------------------------------------------------------
         if k > 1:
             for u, v in self.edges:
                 # Order interval propagation clauses (Tamura et al.)
                 for p in range(1, n - k + 1):
-                    # u <= p and v > p  ==>  v > p + k - 1
-                    cnf.append([-self.var(u, p), self.var(v, p), -self.var(v, p + k - 1)])
-                    # v <= p and u > p  ==>  u > p + k - 1
-                    cnf.append([-self.var(v, p), self.var(u, p), -self.var(u, p + k - 1)])
+                    if p == 1:
+                        cnf.append([-self.var(u, 1), self.var(v, 1), -self.var(v, k)])
+                        cnf.append([-self.var(v, 1), self.var(u, 1), -self.var(u, k)])
+                    else:
+                        cnf.append([-self.var(u, p), self.var(u, p - 1), self.var(v, p), -self.var(v, p + k - 1)])
+                        cnf.append([-self.var(v, p), self.var(v, p - 1), self.var(u, p), -self.var(u, p + k - 1)])
 
                 # Also enforce direct pairwise window exclusions for values |p - q| < k
                 for p in range(1, n + 1):

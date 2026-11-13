@@ -1,11 +1,12 @@
-"""Main entry point for the Antibandwidth Problem (ABP) SAT Solver.
+"""Main entry point for the Antibandwidth Problem (ABP) Solver Framework.
 
 Usage:
-    python main.py --input data/sample_c5.mtx
-    python main.py --input data/sample_p6.mtx --solver cadical153
-    python main.py --input data/sample_p6.mtx --encoding order
-    python main.py --input data/sample_p6.mtx --visualize solution_p6.png
-    python main.py --input data/sample_c5.mtx --check-k 2
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --solver cadical153
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding order
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding cpsat
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --visualize docs/solution_jgl009.png
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --check-k 1
 """
 
 import argparse
@@ -20,13 +21,14 @@ from src.graph_loader import load_graph, resolve_graph_path
 from src.sat_encoder import AntibandwidthSATEncoder
 from src.order_encoder import AntibandwidthOrderEncoder
 from src.solver import AntibandwidthSolver
-from src.visualizer import visualize_antibandwidth_labeling
+from src.cp_solver import AntibandwidthCPSolver, HAS_ORTOOLS
+from src.visualizer import visualize_antibandwidth_labeling, visualize_benchmark_comparison
 
 
 def print_banner():
     banner = r"""
 ======================================================================
-       ANTIBANDWIDTH PROBLEM (ABP) - SAT SOLVER FRAMEWORK
+       ANTIBANDWIDTH PROBLEM (ABP) - SAT & CP SOLVER FRAMEWORK
 ======================================================================
 """
     print(banner)
@@ -34,32 +36,32 @@ def print_banner():
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Solve Antibandwidth Problem (ABP) using SAT solvers and Binary Search."
+        description="Solve Antibandwidth Problem (ABP) using SAT solvers and CP-SAT."
     )
     parser.add_argument(
         "-i", "--input",
-        type=str,
-        default="data/instance/harwell-boeing_v2/can___24.txt",
-        help="Path to graph benchmark file (e.g. data/instance/harwell-boeing_v2/can___24.txt).",
+        nargs="+",
+        default=["data/instance/harwell-boeing_v2/can___24.txt"],
+        help="One or more paths to graph benchmark files, directories, or glob patterns.",
     )
     parser.add_argument(
         "-k", "--check-k",
         type=int,
         default=None,
-        help="Check satisfiability for a single target k instead of running binary search.",
+        help="Check satisfiability for a single target k instead of running full optimization.",
     )
     parser.add_argument(
         "--solver",
         type=str,
         default="glucose4",
-        help="PySAT solver backend (e.g., 'glucose4', 'cadical153', 'minisat22', 'lingeling'). Default: glucose4",
+        help="Solver backend: PySAT solvers ('glucose4', 'cadical153', 'minisat22') or 'cpsat'. Default: glucose4",
     )
     parser.add_argument(
         "--encoding",
         type=str,
-        choices=["direct", "order"],
+        choices=["direct", "order", "cpsat"],
         default="direct",
-        help="SAT encoding formulation: 'direct' (Direct Encoding) or 'order' (Order Encoding). Default: direct",
+        help="Encoding / formulation: 'direct' (Pairwise), 'order' (Order Encoding), or 'cpsat' (Google OR-Tools CP-SAT). Default: direct",
     )
     parser.add_argument(
         "--external-solver",
@@ -70,7 +72,7 @@ def parse_args():
     parser.add_argument(
         "--method",
         type=str,
-        choices=["binary_search", "linear_search"],
+        choices=["binary_search", "linear_search", "direct_optimize"],
         default="binary_search",
         help="Search strategy for optimal k. Default: binary_search",
     )
@@ -92,17 +94,23 @@ def parse_args():
         help="Export CNF formula for the target k (specified by --check-k) to a DIMACS file.",
     )
     parser.add_argument(
+        "--time-limit",
+        type=float,
+        default=100.0,
+        help="Time limit in seconds for CP-SAT solver. Default: 100.0s",
+    )
+    parser.add_argument(
         "--visualize",
         type=str,
         nargs="?",
-        const="solution.png",
+        const="docs/solution.png",
         default=None,
-        help="Path to save graphical visualization of the solution (e.g., --visualize solution.png).",
+        help="Path to save graphical visualization of the solution (e.g., --visualize docs/solution.png).",
     )
     parser.add_argument(
         "--show-plot",
         action="store_true",
-        help="Open interactive GUI window to view the graph visualization plot.",
+        help="Display the matplotlib interactive GUI plot window.",
     )
     return parser.parse_args()
 
@@ -111,12 +119,112 @@ def main():
     print_banner()
     args = parse_args()
 
-    input_path = resolve_graph_path(args.input)
-    if not input_path.exists():
-        print(f"[Error] File not found: {args.input}")
-        print("Please check the path or use one of the files in data/instance/ (e.g. data/instance/harwell-boeing_v2/can___24.txt)")
+    # Resolve input path(s) - supports single file, multiple files, directories, or globs
+    input_list = args.input if isinstance(args.input, list) else [args.input]
+    resolved_paths = []
+    for item in input_list:
+        p = Path(item)
+        if p.is_dir():
+            resolved_paths.extend(sorted(p.glob("*.txt")))
+            resolved_paths.extend(sorted(p.glob("*.mtx")))
+        elif "*" in item or "?" in item:
+            import glob
+            resolved_paths.extend(Path(m) for m in sorted(glob.glob(item)))
+        else:
+            resolved = resolve_graph_path(p)
+            if resolved.exists():
+                resolved_paths.append(resolved)
+            else:
+                print(f"[Warning] Graph file not found: {item}")
+
+    unique_paths = []
+    for p in resolved_paths:
+        if p not in unique_paths:
+            unique_paths.append(p)
+
+    if not unique_paths:
+        print(f"[Error] No valid graph benchmark files found.")
         sys.exit(1)
 
+    break_sym = not args.no_symmetry_breaking
+    is_cpsat = (args.encoding == "cpsat" or args.solver == "cpsat")
+
+    if is_cpsat and not HAS_ORTOOLS:
+        print("[Error] Google OR-Tools is not installed. Run: pip install ortools")
+        sys.exit(1)
+
+    # If multiple graphs are passed: Batch multi-graph mode
+    if len(unique_paths) > 1:
+        print(f"[*] Multi-Matrix Mode: processing {len(unique_paths)} matrices with encoding={args.encoding.upper()}, solver={args.solver}...")
+        batch_results = []
+
+        for p in unique_paths:
+            try:
+                g, inf = load_graph(p)
+            except Exception as e:
+                print(f"[!] Skipping {p.name}: load error ({e})")
+                continue
+
+            print(f"    --> Solving {inf['filename']:15s} (|V|={inf['num_vertices']:3d}, |E|={inf['num_edges']:4d}, D={inf['density']:.4f}) ... ", end="", flush=True)
+
+            if is_cpsat:
+                solver_inst = AntibandwidthCPSolver(
+                    g,
+                    break_symmetry=break_sym,
+                    time_limit_seconds=getattr(args, "time_limit", 100.0),
+                    verbose=False,
+                )
+                mth = "direct_optimize" if args.method == "direct_optimize" else "binary_search"
+                res = solver_inst.solve(method=mth)
+            else:
+                solver_inst = AntibandwidthSolver(
+                    g,
+                    solver_name=args.solver,
+                    encoding=args.encoding,
+                    break_symmetry=break_sym,
+                    external_solver=args.external_solver,
+                    verbose=False,
+                )
+                res = solver_inst.solve(method=args.method)
+
+            n_cls = sum(it.get("clauses", 0) for it in res.get("iterations", []))
+            st = "PASSED" if res.get("verified", False) else "FAILED"
+            print(f"B*(G)={res['optimal_k']:2d} | Time={res['total_time']:.4f}s | Clauses={n_cls} [{st}]")
+
+            batch_results.append({
+                "graph": inf["filename"],
+                "n": inf["num_vertices"],
+                "m": inf["num_edges"],
+                "density": inf["density"],
+                "config": f"{args.encoding.upper()}_{args.solver}",
+                "optimal_k": res["optimal_k"],
+                "time": res["total_time"],
+                "clauses": n_cls,
+                "verified": res.get("verified", False),
+            })
+
+        print("\n" + "=" * 95)
+        print("                        MULTI-GRAPH COMPARATIVE RESULTS SUMMARY")
+        print("=" * 95)
+        print(f"{'Graph':16s} | {'|V|':4s} | {'|E|':5s} | {'Density':7s} | {'Config':18s} | {'B*(G)':5s} | {'Time (s)':10s} | {'Clauses':10s} | {'Status':6s}")
+        print("-" * 95)
+        for r in batch_results:
+            st = "PASSED" if r["verified"] else "FAILED"
+            print(f"{r['graph']:16s} | {r['n']:4d} | {r['m']:5d} | {r['density']:.4f}  | {r['config']:18s} | {r['optimal_k']:5d} | {r['time']:10.4f} | {r['clauses']:10d} | {st:6s}")
+        print("=" * 95 + "\n")
+
+        if args.visualize:
+            visualize_benchmark_comparison(
+                benchmark_data=batch_results,
+                metric="time",
+                title=f"Multi-Matrix Solving Time Comparison ({args.encoding.upper()} - {args.solver})",
+                save_path=args.visualize,
+                show=args.show_plot,
+            )
+        return
+
+    # Single graph mode
+    input_path = unique_paths[0]
     print(f"[*] Loading graph from: {input_path} ...")
     try:
         graph, info = load_graph(input_path)
@@ -132,14 +240,15 @@ def main():
     print(f"    - Degree range: [{info['min_degree']}, {info['max_degree']}]")
     print(f"    - Encoding:     {args.encoding.upper()}")
 
-    break_sym = not args.no_symmetry_breaking
-
     # Mode 1: Check single k or export DIMACS
     if args.check_k is not None:
         target_k = args.check_k
         print(f"\n[*] Mode: Single k Check (Target k = {target_k})")
 
         if args.export_dimacs:
+            if is_cpsat:
+                print("[Error] Cannot export DIMACS CNF for CP-SAT model.")
+                sys.exit(1)
             if args.encoding == "order":
                 encoder = AntibandwidthOrderEncoder(graph, break_symmetry=break_sym)
             else:
@@ -148,22 +257,33 @@ def main():
             print(f"[+] Exported DIMACS CNF to: {args.export_dimacs}")
             return
 
-        solver = AntibandwidthSolver(
-            graph,
-            solver_name=args.solver,
-            encoding=args.encoding,
-            break_symmetry=break_sym,
-            external_solver=args.external_solver,
-            verbose=False,
-        )
+        if is_cpsat:
+            cp_solver = AntibandwidthCPSolver(
+                graph,
+                break_symmetry=break_sym,
+                time_limit_seconds=getattr(args, "time_limit", 100.0),
+                verbose=False,
+            )
+            is_sat, labeling, elapsed, n_clauses = cp_solver.check_sat(target_k)
+            verifier_fn = cp_solver.verify_solution
+        else:
+            solver = AntibandwidthSolver(
+                graph,
+                solver_name=args.solver,
+                encoding=args.encoding,
+                break_symmetry=break_sym,
+                external_solver=args.external_solver,
+                verbose=False,
+            )
+            is_sat, labeling, elapsed, n_clauses = solver.check_sat(target_k)
+            verifier_fn = solver.verify_solution
 
         try:
-            is_sat, labeling, elapsed, n_clauses = solver.check_sat(target_k)
             status = "SATISFIABLE" if is_sat else "UNSATISFIABLE"
-            print(f"[*] Result: {status} in {elapsed:.4f}s ({n_clauses} clauses)")
+            print(f"[*] Result: {status} in {elapsed:.4f}s ({n_clauses} clauses/constraints)")
 
             if is_sat and labeling:
-                valid, min_d, err = solver.verify_solution(labeling, target_k)
+                valid, min_d, err = verifier_fn(labeling, target_k)
                 print(f"[*] Solution verification: {'VALID' if valid else f'INVALID: {err}'}")
                 print(f"[*] Sample vertex labeling: {dict(list(labeling.items())[:10])} ...")
 
@@ -182,22 +302,31 @@ def main():
         return
 
     # Mode 2: Search for optimal Antibandwidth B*(G)
-    solver = AntibandwidthSolver(
-        graph,
-        solver_name=args.solver,
-        encoding=args.encoding,
-        break_symmetry=break_sym,
-        external_solver=args.external_solver,
-        verbose=True,
-    )
-
-    try:
-        results = solver.solve(method=args.method)
-    except RuntimeError as e:
-        print(f"[Error] {e}")
-        print("\nPlease install the required dependencies with:")
-        print("    pip install -r requirements.txt")
-        sys.exit(1)
+    if is_cpsat:
+        cp_solver = AntibandwidthCPSolver(
+            graph,
+            break_symmetry=break_sym,
+            time_limit_seconds=getattr(args, "time_limit", 100.0),
+            verbose=True,
+        )
+        method = "direct_optimize" if args.method == "direct_optimize" else "binary_search"
+        results = cp_solver.solve(method=method)
+    else:
+        solver = AntibandwidthSolver(
+            graph,
+            solver_name=args.solver,
+            encoding=args.encoding,
+            break_symmetry=break_sym,
+            external_solver=args.external_solver,
+            verbose=True,
+        )
+        try:
+            results = solver.solve(method=args.method)
+        except RuntimeError as e:
+            print(f"[Error] {e}")
+            print("\nPlease install the required dependencies with:")
+            print("    pip install -r requirements.txt")
+            sys.exit(1)
 
     opt_k = results["optimal_k"]
     labeling = results["labeling"]

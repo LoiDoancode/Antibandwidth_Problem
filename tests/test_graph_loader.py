@@ -1,70 +1,65 @@
-"""Test script for GraphLoader and data/acoust.data."""
+"""Unit tests for GraphLoader."""
 
-import sys
+import pytest
+import tempfile
 from pathlib import Path
-
-# Configure UTF-8 output for Windows console
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
-
-# Add project root to sys.path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.graph_loader import GraphLoader, load_graph, resolve_graph_path
+import networkx as nx
+from src.graph_loader import load_graph, GraphLoader
 
 
-def test_resolve_and_load_acoust_data():
-    print("=" * 65)
-    print("TEST 1: Resolve path & load_graph('acoust.data')")
-    print("=" * 65)
+class TestGraphLoader:
+    """Tests for loading various graph format benchmarks."""
 
-    # 1. Test resolve_graph_path
-    resolved = resolve_graph_path("acoust.data")
-    print(f"[*] Resolved path: {resolved}")
-    assert resolved.exists(), f"File not found at {resolved}"
+    def test_load_coordinate_format(self):
+        # Create a temporary coordinate format graph file
+        content = """%%MatrixMarket matrix coordinate pattern symmetric
+4 4 3
+1 2
+2 3
+3 4
+"""
+        with tempfile.NamedTemporaryFile("w", suffix=".mtx", delete=False) as tmp:
+            tmp.write(content)
+            tmp_path = Path(tmp.name)
 
-    # 2. Test automatic load_graph()
-    G_auto, info = load_graph("acoust.data")
-    print("[*] Result from load_graph('acoust.data'):")
-    for k, v in info.items():
-        print(f"    - {k:14s}: {v}")
+        try:
+            G, info = load_graph(tmp_path)
+            assert G.number_of_nodes() == 4
+            assert G.number_of_edges() == 3
+            assert info["num_vertices"] == 4
+            assert info["num_edges"] == 3
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink()
 
-    # 3. Test direct Harwell-Boeing parser GraphLoader.from_harwell_boeing()
-    print("\n" + "=" * 65)
-    print("TEST 2: Direct GraphLoader.from_harwell_boeing('data/acoust.data')")
-    print("=" * 65)
-    G_hb = GraphLoader.from_harwell_boeing(resolved)
-    print(f"[*] Nodes (from_harwell_boeing): {G_hb.number_of_nodes()}")
-    print(f"[*] Edges (from_harwell_boeing): {G_hb.number_of_edges()}")
+    def test_load_simple_edge_list(self):
+        content = """# Sample edge list
+0 1
+1 2
+2 3
+"""
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as tmp:
+            tmp.write(content)
+            tmp_path = Path(tmp.name)
 
-    # 4. Inspect header of acoust.data to verify expected dimensions
-    print("\n" + "=" * 65)
-    print("TEST 3: Inspect acoust.data Header vs Loaded Graph")
-    print("=" * 65)
-    with open(resolved, "r", encoding="utf-8", errors="ignore") as f:
-        header_lines = [f.readline().rstrip("\n") for _ in range(5)]
+        try:
+            G, info = load_graph(tmp_path)
+            assert G.number_of_nodes() == 4
+            assert G.number_of_edges() == 3
+            assert set(G.nodes()) == {0, 1, 2, 3}
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink()
 
-    print("[*] First 5 lines of acoust.data:")
-    for i, line in enumerate(header_lines, 1):
-        print(f"    Line {i}: {line}")
+    def test_file_not_found_raises_error(self):
+        with pytest.raises(FileNotFoundError):
+            load_graph("non_existent_graph_path_12345.mtx")
 
-    # Expected from line 3: CSA 841 841 4089 0 -> 841 vertices
-    expected_nodes = int(header_lines[2][3:].split()[0])
-    print(f"\n[*] Expected vertices from Harwell-Boeing header: {expected_nodes}")
-    print(f"    - load_graph() vertices           : {G_auto.number_of_nodes()}")
-    print(f"    - from_harwell_boeing() vertices  : {G_hb.number_of_nodes()}")
+    def test_load_can_24_if_present(self):
+        path = Path("data/instance/harwell-boeing_v2/can___24.txt")
+        if path.exists():
+            G, info = load_graph(path)
+            assert G.number_of_nodes() == 24
+            assert info["num_vertices"] == 24
+            assert G.number_of_edges() > 0
 
-    if G_auto.number_of_nodes() == expected_nodes and G_auto.number_of_edges() == G_hb.number_of_edges():
-        print("\n[PASS] load_graph('acoust.data') đọc đúng định dạng Harwell-Boeing!")
-    else:
-        print("\n[WARNING] Phát hiện sự sai lệch khi dùng load_graph('acoust.data')!")
-        print("  -> Nguyên nhân 1: Đuôi file '.data' chưa có trong danh sách ['.rb', '.rua', '.rsa', '.hb']")
-        print("     của hàm load_graph(), và phần nhận diện nội dung (content-based detection) thấy dòng 2")
-        print("     ('1672 53 256 1363 0') có >= 3 số nguyên nên tưởng nhầm là Coordinate Format (nrows=1672)!")
-        print("  -> Nguyên nhân 2: File acoust.data thực chất là một file gộp chứa NHIỀU ma trận Harwell-Boeing")
-        print("     nối tiếp nhau (ví dụ: YOUNG1C, YOUNG2C, ...).")
-
-
-if __name__ == "__main__":
-    test_resolve_and_load_acoust_data()
