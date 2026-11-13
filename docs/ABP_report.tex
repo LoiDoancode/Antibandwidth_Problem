@@ -66,19 +66,19 @@ Harwell--Boeing
 
 %% ------------------------------------------------------------
 \section{Ứng dụng thực tế}
-\todo{Tường: Chương 2 (Tuần 1).}
+\todo{Tùng: Chương 2 (Tuần 1).}
 
 \subsection{Phân bổ tần số vô tuyến (Radio Frequency Assignment)}
-\todo{Tường: Giãn cách tần số giữa các trạm phát sóng liền kề để giảm thiểu hiện tượng nhiễu giao thoa.}
+\todo{Tùng: Giãn cách tần số giữa các trạm phát sóng liền kề để giảm thiểu hiện tượng nhiễu giao thoa.}
 
 \subsection{Giảm nhiễu xuyên âm trong thiết kế VLSI (Crosstalk Minimization)}
-\todo{Tường: Tối ưu khoảng cách hình học giữa các đường mạch dẫn tín hiệu song song trong vi mạch tích hợp.}
+\todo{Tùng: Tối ưu khoảng cách hình học giữa các đường mạch dẫn tín hiệu song song trong vi mạch tích hợp.}
 
 \subsection{Lập lịch mạng cảm biến và kênh truyền}
-\todo{Tường: Phân chia khe thời gian (time-slot) truyền thông nhằm tránh xung đột dữ liệu trong mạng không dây.}
+\todo{Tùng: Phân chia khe thời gian (time-slot) truyền thông nhằm tránh xung đột dữ liệu trong mạng không dây.}
 
 \subsection{Bảo mật dữ liệu và định tuyến ẩn danh}
-\todo{Tường: Phân tán vị trí lưu trữ và định tuyến mạng phân tán chống lại các tấn công phân tích luồng dữ liệu.}
+\todo{Tùng: Phân tán vị trí lưu trữ và định tuyến mạng phân tán chống lại các tấn công phân tích luồng dữ liệu.}
 
 %% ------------------------------------------------------------
 \section{Chuyển đổi bài toán tối ưu sang bài toán quyết định}
@@ -120,13 +120,55 @@ Harwell--Boeing
 \todo{Lợi: Đặc tả dữ liệu, biểu đồ cnsplots, phân tích so sánh và đánh giá (Tuần 3). Tùng: Bảng số liệu thực nghiệm CP-SAT. Tường: Thu thập ma trận lớn.}
 
 \subsection{Đặc tả dữ liệu Harwell--Boeing}
-\todo{Lợi: Bảng thông số tập ma trận chuẩn Harwell--Boeing (số đỉnh $n$, số cạnh $m$, mật độ đồ thị, phân bố bậc đỉnh).}
+
+Để kiểm thử tính đúng đắn và đánh giá hiệu năng của các giải thuật mã hóa SAT (Direct Encoding, Order Encoding) cũng như mô hình quy hoạch ràng buộc CP-SAT, chúng tôi sử dụng tập dữ liệu ma trận thưa từ bộ sưu tập chuẩn quốc tế \textbf{SuiteSparse Matrix Collection} (tiền thân là \textit{Harwell--Boeing Sparse Matrix Collection}) \cite{harwellboeing}. Đây là tập dữ liệu đối chuẩn kinh điển trong các nghiên cứu tối ưu tổ hợp đồ thị như Graph Bandwidth, Profile Minimization và Antibandwidth.
+
+Mỗi đồ thị vô hướng đơn $G = (V, E)$ được biểu diễn dưới dạng ma trận kề đối xứng $A \in \{0, 1\}^{n \times n}$ theo định dạng Matrix Market (\texttt{.mtx}) hoặc định dạng tọa độ chuẩn (\texttt{.txt}, \texttt{.rb}):
+\begin{itemize}
+    \item Dòng kích thước xác định số lượng đỉnh $n = |V|$, số cạnh $m = |E|$ và số phần tử khác không ($nnz$).
+    \item Các dòng kế tiếp chứa các cặp chỉ số đỉnh $(u, v)$ (đánh số từ 1 đến $n$) tương ứng với các cạnh $\{u, v\} \in E$.
+\end{itemize}
+
+Mật độ cạnh $D(G)$ của đồ thị vô hướng đơn được tính theo công thức:
+\begin{equation}
+    D(G) = \frac{2 \cdot |E|}{|V| \cdot (|V| - 1)} = \frac{2m}{n(n - 1)}
+\end{equation}
+
+Bảng~\ref{tab:harwell_boeing_specs} trình bày chi tiết các thông số kỹ thuật cấu trúc của các ma trận kiểm thử chuẩn được sử dụng trong nghiên cứu này, bao gồm số đỉnh $n$, số cạnh $m$, mật độ cạnh $D(G)$, bậc cực tiểu $\delta(G)$, bậc cực đại $\Delta(G)$, bậc trung bình $\bar{d}$ và lĩnh vực ứng dụng nguồn gốc của dữ liệu.
+
+\begin{table}[htbp]
+\centering
+\caption{Thông số kỹ thuật của các ma trận kiểm thử chuẩn từ tập Harwell--Boeing / SuiteSparse.}
+\label{tab:harwell_boeing_specs}
+\small
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrl@{}}
+\toprule
+Tên đồ thị & $|V| (n)$ & $|E| (m)$ & Mật độ $D$ & $\delta(G)$ & $\Delta(G)$ & $\bar{d}$ & Nguồn gốc / Lĩnh vực ứng dụng \\
+\midrule
+\texttt{jgl009.txt}     & 9   & 32   & 0.8889 & 5 & 8  & 7.11  & Tổ hợp ma trận ngẫu nhiên (JGL) \\
+\texttt{jgl011.txt}     & 11  & 49   & 0.8909 & 4 & 10 & 8.91  & Tổ hợp ma trận ngẫu nhiên (JGL) \\
+\texttt{can\_\_\_24.txt} & 24  & 68   & 0.2464 & 3 & 8  & 5.67  & Cơ học kết cấu (Cannes collection) \\
+\texttt{bcspwr01.txt}   & 39  & 46   & 0.0621 & 1 & 5  & 2.36  & Mạng lưới truyền tải điện lực (Power grid) \\
+\texttt{dwt\_\_\_59.txt} & 59  & 104  & 0.0608 & 1 & 5  & 3.53  & Lưới biến đổi sóng con (Wavelet transform) \\
+\texttt{can\_\_\_61.txt} & 61  & 248  & 0.1355 & 4 & 24 & 8.13  & Kết cấu thân máy bay Boeing \\
+\texttt{ash85.txt}      & 85  & 219  & 0.0613 & 2 & 9  & 5.15  & Trắc địa và bản đồ thưa Holland \\
+\texttt{nos4}           & 100 & 247  & 0.0499 & 1 & 6  & 4.94  & Xấp xỉ phương trình phần tử hữu hạn \\
+\texttt{nos3}           & 960 & 7442 & 0.0162 & 5 & 17 & 15.50 & Kết cấu dầm giàn hữu hạn lớn (Big instance) \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+Phân tích các đặc trưng cấu trúc ảnh hưởng sâu sắc đến độ phức tạp tính toán và hiệu năng của các bộ giải:
+\begin{enumerate}
+    \item \textbf{Mật độ cạnh $D(G)$:} Đối với đồ thị có mật độ cao như \texttt{jgl009} và \texttt{jgl011} ($D \approx 0.89$), số lượng mệnh đề cấm khoảng cách trong Direct Encoding tăng nhanh theo cấp số $\mathcal{O}(m \cdot k^2)$, tuy nhiên giá trị mục tiêu tối ưu $B^*(G)$ bị chặn trên rất nhỏ ($B^*(G) = 1$) do nguyên lý lồng bồ câu Dirichlet. Ngược lại, trên các đồ thị thưa như \texttt{bcspwr01} ($D \approx 0.062$), không gian nghiệm hợp lệ rộng hơn, giá trị kháng băng thông đạt đến $B^*(G) = 17$, đòi hỏi solver phải khám phá không gian gán nhãn sâu hơn qua nhiều bước tìm kiếm nhị phân.
+    \item \textbf{Độ phân tán bậc đỉnh $\Delta(G) - \delta(G)$:} Thể hiện tính bất đối xứng cấu trúc của đồ thị. Đỉnh có bậc lớn nhất $v_0$ ($\text{deg}(v_0) = \Delta(G)$) được chọn làm đỉnh neo (pivot) cho kỹ thuật phá vỡ đối xứng lật ngược (Symmetry Breaking). Khi ghim đỉnh $v_0$ vào nửa đầu dải vị trí $p \le \lceil n/2 \rceil$, một lượng lớn các suy diễn lan truyền đơn vị (Unit Propagation) được kích hoạt trên tập đỉnh láng giềng $N(v_0)$, giúp cắt giảm ngay 50\% không gian tìm kiếm đối xứng ở các tầng quyết định ban đầu.
+\end{enumerate}
 
 \subsection{Môi trường và cấu hình thực nghiệm}
 \todo{Lợi: Thông số phần cứng CPU, RAM, hệ điều hành, phiên bản Python, PySAT (Glucose4, CaDiCaL) và Google OR-Tools CP-SAT.}
 
 \subsection{Kết quả và so sánh}
-\todo{Lợi: Biểu đồ trực quan hóa bằng thư viện cnsplots (thời gian giải, số lượng clause, speedup) so sánh giữa Direct Encoding, Order Encoding và CP-SAT.}
+\todo{Lợi: Biểu đồ trực quan hóa bằng thư viện cnsplots (thời gian giải, số lượng clause, speedup) so sánh giữa Direct Encoding, Order Encoding và CP-SAT. Tùng: Tổng hợp bảng số liệu thực nghiệm SAT vs. CP-SAT.}
 
 \subsection{Phân tích và đánh giá}
 \todo{Lợi: Phân tích ưu nhược điểm thực tế giữa SAT và CP-SAT theo mật độ đồ thị; đánh giá hiệu quả giảm thời gian của Symmetry Breaking và Order Encoding.}
@@ -140,7 +182,7 @@ Harwell--Boeing
 
 %% ------------------------------------------------------------
 \section*{CRediT authorship contribution statement}
-\todo{Tường: Conceptualization, Methodology, Software (Graph Loader, Order Encoding), Writing - Original Draft (Chương 1, 2, 3, 4.4). Tùng: Software (Direct Encoding, CP-SAT), Writing - Original Draft (Chương 4.1, 4.2, 4.5). Lợi: Software (Solver Pipeline, Symmetry Breaking, cnsplots Visualizer), Writing - Review \& Editing (Chương 4.3, 5, 6).}
+\todo{Tường: Conceptualization, Methodology, Software (Graph Loader, Order Encoding), Writing - Original Draft (Chương 1, 3, 4.4), Supervision. Tùng: Software (Direct Encoding, CP-SAT), Writing - Original Draft (Chương 2, 4.1, 4.2, 4.5), Investigation (Bảng số liệu thực nghiệm Chương 5). Lợi: Software (Solver Pipeline, Symmetry Breaking, cnsplots Visualizer), Writing - Original Draft (Chương 4.3, 5, 6), Writing - Review \& Editing.}
 
 \section*{Declaration of competing interest}
 \todo{Tường, Tùng, Lợi: The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.}
