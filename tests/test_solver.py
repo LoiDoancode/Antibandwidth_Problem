@@ -94,3 +94,19 @@ class TestAntibandwidthSolver:
         assert is_valid is False
         assert min_dist == 1
 
+    @pytest.mark.parametrize("amo_encoding", ["seqcounter", "commander", "totalizer", "ladder", "bitwise"])
+    def test_advanced_amo_encodings_solve_equivalently(self, amo_encoding):
+        # Path P_6 has optimal B*(P_6) = 3; Cycle C_5 has optimal B*(C_5) = 2
+        for graph, expected_k in [(nx.path_graph(6), 3), (nx.cycle_graph(5), 2)]:
+            solver = AntibandwidthSolver(
+                graph,
+                solver_name="glucose4",
+                encoding="direct",
+                amo_encoding=amo_encoding,
+                break_symmetry=True,
+                verbose=False,
+            )
+            res = solver.solve()
+            assert res["optimal_k"] == expected_k
+            assert res["verified"] is True
+

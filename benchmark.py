@@ -12,6 +12,7 @@ from typing import Dict, List, Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.graph_loader import load_graph
+from src.sat_encoder import SUPPORTED_AMO_ENCODINGS
 from src.solver import AntibandwidthSolver
 from src.cp_solver import AntibandwidthCPSolver, HAS_ORTOOLS
 from src.visualizer import (
@@ -50,6 +51,13 @@ def parse_args():
         default=["direct", "order", "cpsat"],
         choices=["direct", "order", "cpsat"],
         help="Encodings / models to compare (direct, order, cpsat). Default: direct order cpsat",
+    )
+    parser.add_argument(
+        "--amo-encodings",
+        nargs="+",
+        default=["pairwise"],
+        choices=list(SUPPORTED_AMO_ENCODINGS),
+        help="AMO encodings for Direct SAT ('pairwise', 'seqcounter', 'commander', 'totalizer', 'ladder', 'bitwise'). Default: pairwise",
     )
     parser.add_argument(
         "--compare-symmetry",
@@ -241,14 +249,20 @@ def run_benchmark():
                             show=False,
                         )
             else:
-                for solv in args.solvers:
+                amo_list = args.amo_encodings if enc == "direct" else ["pairwise"]
+                for solv, amo_enc in [(s, a) for s in args.solvers for a in amo_list]:
                     for sym in sym_modes:
                         sym_label = "Sym" if sym else "NoSym"
-                        cfg_name = f"{enc.upper()}_{solv}_{sym_label}"
+                        enc_label = (
+                            f"{enc.upper()}_{amo_enc.upper()}"
+                            if (enc == "direct" and amo_enc != "pairwise")
+                            else enc.upper()
+                        )
+                        cfg_name = f"{enc_label}_{solv}_{sym_label}"
 
                         print(f"    Running config [{cfg_name:24s}] ... ", end="", flush=True)
 
-                        if n > 100:
+                        if n > 100 and (enc == "order" or amo_enc == "pairwise"):
                             est_clauses = 2 * n * (n * (n - 1) // 2)
                             limit_t = getattr(args, "time_limit", 100.0)
                             print(f"OOM (n={n} > 100: ~{est_clauses:,d} clauses exceed RAM) [SKIP]")
@@ -258,7 +272,7 @@ def run_benchmark():
                                 "m": m,
                                 "density": round(density, 4),
                                 "config": cfg_name,
-                                "encoding": enc,
+                                "encoding": enc_label.lower(),
                                 "solver": solv,
                                 "symmetry": sym,
                                 "optimal_k": "OOM",
@@ -273,6 +287,7 @@ def run_benchmark():
                             graph=graph,
                             solver_name=solv,
                             encoding=enc,
+                            amo_encoding=amo_enc,
                             break_symmetry=sym,
                             verbose=False,
                         )
@@ -310,7 +325,7 @@ def run_benchmark():
                             "m": m,
                             "density": round(density, 4),
                             "config": cfg_name,
-                            "encoding": enc,
+                            "encoding": enc_label.lower(),
                             "solver": solv,
                             "symmetry": sym,
                             "optimal_k": k_opt,
@@ -321,12 +336,12 @@ def run_benchmark():
                         results.append(entry)
 
                         if args.visualize_solutions and res["labeling"] and sym:
-                            img_path = f"docs/solution_{g_name}_{enc}_{solv}.png"
+                            img_path = f"docs/solution_{g_name}_{enc_label.lower()}_{solv}.png"
                             visualize_antibandwidth_labeling(
                                 graph=graph,
                                 labeling=res["labeling"],
                                 k=k_opt,
-                                title=f"Solution for {g_name} ({enc.upper()}_{solv})",
+                                title=f"Solution for {g_name} ({enc_label}_{solv})",
                                 save_path=img_path,
                                 show=False,
                             )

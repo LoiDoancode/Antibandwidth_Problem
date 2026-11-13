@@ -32,6 +32,7 @@ class AntibandwidthSolver:
         graph: nx.Graph,
         solver_name: str = "glucose4",
         encoding: str = "direct",
+        amo_encoding: str = "pairwise",
         break_symmetry: bool = True,
         external_solver: Optional[str] = None,
         verbose: bool = True,
@@ -41,6 +42,8 @@ class AntibandwidthSolver:
             graph: Undirected graph with vertices 0..n-1.
             solver_name: Name of PySAT solver (e.g., 'glucose4', 'cadical153', 'minisat22').
             encoding: 'direct' (Direct Encoding) or 'order' (Order Encoding).
+            amo_encoding: AMO encoding for Direct Encoding ('pairwise', 'seqcounter',
+                          'commander', 'totalizer', 'ladder', 'bitwise').
             break_symmetry: Enable symmetry breaking constraints.
             external_solver: Path / command of external SAT solver binary (e.g. 'kissat').
             verbose: Print step-by-step solver progress.
@@ -49,6 +52,7 @@ class AntibandwidthSolver:
         self.n = graph.number_of_nodes()
         self.solver_name = solver_name
         self.encoding = encoding.lower()
+        self.amo_encoding = amo_encoding.lower()
         self.break_symmetry = break_symmetry
         self.external_solver = external_solver
         self.verbose = verbose
@@ -57,7 +61,11 @@ class AntibandwidthSolver:
         if self.encoding == "order":
             self.encoder = AntibandwidthOrderEncoder(graph, break_symmetry=break_symmetry)
         else:
-            self.encoder = AntibandwidthSATEncoder(graph, break_symmetry=break_symmetry)
+            self.encoder = AntibandwidthSATEncoder(
+                graph,
+                break_symmetry=break_symmetry,
+                amo_encoding=self.amo_encoding,
+            )
 
     def check_sat_pysat(self, cnf) -> Tuple[bool, Optional[List[int]], float]:
         """Solve CNF using PySAT backend."""
