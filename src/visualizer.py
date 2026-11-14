@@ -295,8 +295,11 @@ def visualize_benchmark_comparison(
     fig, ax = plt.subplots(figsize=(max(11, len(graphs) * 2.2), 6.5))
 
     colors = [
-        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
-        "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+        "#1f77b4", "#aec7e8", "#ff7f0e", "#ffbb78",
+        "#2ca02c", "#98df8a", "#d62728", "#ff9896",
+        "#9467bd", "#c5b0d5", "#8c564b", "#c49c94",
+        "#e377c2", "#f7b6d2", "#7f7f7f", "#c7c7c7",
+        "#bcbd22", "#dbdb8d", "#17becf", "#9edae5"
     ]
 
     # Configure Y-axis scaling (Logarithmic vs Linear)
@@ -537,6 +540,12 @@ def visualize_speedup_comparison(
     fig, ax = plt.subplots(figsize=(max(9, len(graphs) * 2), 5.5))
     # Custom color palette: ORDER_glucose4 is explicitly gold/yellow (#f1c40f)
     speedup_color_map = {
+        "direct_pairwise_glucose4": "#2b5c8f",
+        "direct_pairwise_cadical153": "#d95f02",
+        "direct_commander_glucose4": "#27ae60",
+        "direct_commander_cadical153": "#2ecc71",
+        "direct_seqcounter_glucose4": "#e67e22",
+        "direct_seqcounter_cadical153": "#f39c12",
         "order_glucose4": "#f1c40f",      # Vang tuoi / Gold Yellow
         "order_cadical153": "#1b9e77",    # Xanh luc / Teal
         "direct_glucose4": "#2b5c8f",     # Xanh duong dam / Navy Blue

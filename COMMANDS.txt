@@ -1,0 +1,89 @@
+================================================================================
+          ANTIBANDWIDTH PROBLEM (ABP) - COMMAND CHEAT SHEET
+================================================================================
+
+--------------------------------------------------------------------------------
+1. CHAY BENCHMARK TOAN BO CAC BO TEST DO THI (Xuat CSV, Markdown & 3 Bieu do)
+--------------------------------------------------------------------------------
+# Chay toan bo 5 do thi voi tat ca mo hinh (mac dinh timeout 300s):
+python benchmark.py
+
+# Chay toan bo voi solver PySAT cu the (vi du Glucose4):
+python benchmark.py --solvers glucose4
+
+# Chay toan bo voi thoi gian timeout tuy chinh (vi du 300s):
+python benchmark.py --time-limit 300
+
+# So sanh toan bo cac mo hinh chi tren 1 do thi duy nhat:
+python benchmark.py -i data/instance/harwell-boeing_v2/can___24.txt
+
+
+--------------------------------------------------------------------------------
+2. CHAY TUNG BO TEST DO THI DON LE (main.py)
+--------------------------------------------------------------------------------
+# Do thi 1: jgl009.txt (|V|=9, |E|=32 - day)
+python main.py -i data/instance/harwell-boeing_v2/jgl009.txt --encoding commander
+
+# Do thi 2: jgl011.txt (|V|=11, |E|=49 - day)
+python main.py -i data/instance/harwell-boeing_v2/jgl011.txt --encoding commander
+
+# Do thi 3: can___24.txt (|V|=24, |E|=68)
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding commander
+
+# Do thi 4: bcspwr01.txt (|V|=39, |E|=46 - thua)
+python main.py -i data/instance/harwell-boeing_v2/bcspwr01.txt --encoding commander
+
+# Do thi 5: can___61.txt (|V|=61, |E|=248 - do thi lon nhat)
+python main.py -i data/instance/harwell-boeing_v2/can___61.txt --encoding commander
+
+
+--------------------------------------------------------------------------------
+3. CAC TUY CHON ENCODING VA SOLVER TREN TUNG DO THI
+--------------------------------------------------------------------------------
+# Direct voi Commander AMO (nhanh nhat, it menh de nhat):
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding commander
+
+# Direct voi Sequential Counter AMO:
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding seqcounter
+
+# Direct co ban (Pairwise AMO):
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding direct
+
+# Order Encoding:
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding order
+
+# Google OR-Tools CP-SAT:
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding cpsat
+
+# Chon SAT backend cadical153 (mac dinh la glucose4):
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding commander --solver cadical153
+
+# Tat pha vo doi xung (No Symmetry Breaking):
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding commander --no-symmetry-breaking
+
+# Giai va luu anh truc quan hoa nghiem:
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt --encoding commander --visualize docs/solution_can24.png
+
+
+--------------------------------------------------------------------------------
+4. CHAY KIEM THU TU DONG (UNIT TESTS PYTEST)
+--------------------------------------------------------------------------------
+# Chay toan bo 43 bai test:
+python -m pytest
+
+# Chay toan bo 43 test va hien thi chi tiet tung test:
+python -m pytest -v
+
+# Chay tung file test theo module:
+python -m pytest tests/test_encoders.py -v
+python -m pytest tests/test_solver.py -v
+python -m pytest tests/test_cp_solver.py -v
+python -m pytest tests/test_graph_loader.py -v
+python -m pytest tests/test_visualizer.py -v
+python -m pytest tests/test_cli.py -v
+
+# Chay loc theo tu khoa:
+python -m pytest -k "amo" -v
+python -m pytest -k "symmetry" -v
+================================================================================
+

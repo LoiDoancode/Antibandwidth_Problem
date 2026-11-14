@@ -30,7 +30,7 @@
 \address{Khoa Công nghệ Thông tin, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội}
 
 \begin{abstract}
-\todo{Tường: Viết tóm tắt (Abstract) ở Tuần 3: Tổng quan bài toán ABP, tiếp cận mô hình hóa SAT (Direct, Order) và đối chuẩn CP-SAT, các kết quả thực nghiệm nổi bật trên tập Harwell--Boeing và kết luận.}
+\todo{Tường: Viết tóm tắt (Abstract) ở Tuần 3: Tổng quan bài toán ABP, tiếp cận mô hình hóa SAT (Direct, Order, Staircase SCL) và đối chuẩn CP-SAT, chiến lược tìm kiếm (Binary/Incremental Search) kèm Hard Timeout, các kết quả thực nghiệm nổi bật trên tập Harwell--Boeing và kết luận.}
 \vspace{6\baselineskip}
 \end{abstract}
 
@@ -39,6 +39,7 @@ Antibandwidth \sep
 SAT solver \sep
 Direct Encoding \sep
 Order Encoding \sep
+Staircase Encoding (SCL) \sep
 CP-SAT \sep
 Symmetry Breaking \sep
 cnsplots \sep
@@ -93,12 +94,12 @@ Harwell--Boeing
 \subsection{Thuật toán Binary Search}
 \todo{Tường: Thiết kế và phân tích sơ đồ khối thuật toán tìm kiếm nhị phân giá trị $k$ tối ưu kết hợp SAT Solver.}
 
-\subsection{Incremental SAT}
-\todo{Tường: Tối ưu hóa việc giải gia tăng (Incremental SAT) sử dụng assumptions để tái sử dụng learned clauses qua các vòng lặp kiểm tra $k$.}
+\subsection{Tìm kiếm tăng dần từ cận dưới (Incremental Search)}
+\todo{Tường: Chiến lược tìm kiếm tăng dần $k = 1, 2, \dots$ (\texttt{--method incremental}) kết hợp ghi nhận nghiệm tốt nhất theo thời gian thực (\texttt{on\_best\_found}) và tái sử dụng learned clauses, giúp giữ lại cận dưới $B(G)$ khả thi khi gặp timeout trên các đồ thị lớn.}
 
 %% ------------------------------------------------------------
 \section{Mô hình hóa bài toán (SAT \& CP-SAT)}
-\todo{Tùng: 4.1, 4.2 và 4.5. Lợi: 4.3. Tường: 4.4 (Tuần 2).}
+\todo{Tùng: 4.1, 4.2, 4.5 và 4.6. Lợi: 4.3. Tường: 4.4 (Tuần 2).}
 
 \subsection{Direct Encoding và hệ ràng buộc song ánh}
 \todo{Tùng: Ma trận biến Boolean $x_{i,p}$, các ràng buộc ALO/AMO cho đỉnh và vị trí, tích hợp CardEnc (Sequential Counter / Commander qua PySAT).}
@@ -112,6 +113,9 @@ Harwell--Boeing
 \subsection{Order Encoding}
 \todo{Tường: Biến mệnh đề $y_{i,p} \iff f(i) \le p$, hệ ràng buộc đơn điệu và lan truyền khoảng cách theo mô hình Tamura et al.}
 
+\subsection{Staircase Sequential Counter Encoding (SCL)}
+\todo{Tùng: Mô hình mã hóa bậc thang (Staircase Encoding) theo Truong et al. \cite{truong2025}: mã hóa ràng buộc khoảng cách cạnh $\{u,v\} \in E$ bằng SCAMO theo cửa sổ trượt $w = k$ kết hợp khối AMO/AMZ trên từng đỉnh và kỹ thuật tách biến đỉnh, giảm số lượng mệnh đề xuống $\mathcal{O}(|V| \cdot n)$.}
+
 \subsection{Mô hình quy hoạch ràng buộc (Google OR-Tools CP-SAT)}
 \todo{Tùng: Biến miền nguyên IntVar $f(u) \in \{1, \dots, n\}$, ràng buộc AddAllDifferent và ràng buộc khoảng cách $|f(u) - f(v)| \ge k$.}
 
@@ -121,7 +125,7 @@ Harwell--Boeing
 
 \subsection{Đặc tả dữ liệu Harwell--Boeing}
 
-Để kiểm thử tính đúng đắn và đánh giá hiệu năng của các giải thuật mã hóa SAT (Direct Encoding, Order Encoding) cũng như mô hình quy hoạch ràng buộc CP-SAT, chúng tôi sử dụng tập dữ liệu ma trận thưa từ bộ sưu tập chuẩn quốc tế \textbf{SuiteSparse Matrix Collection} (tiền thân là \textit{Harwell--Boeing Sparse Matrix Collection}) \cite{harwellboeing}. Đây là tập dữ liệu đối chuẩn kinh điển trong các nghiên cứu tối ưu tổ hợp đồ thị như Graph Bandwidth, Profile Minimization và Antibandwidth.
+Để kiểm thử tính đúng đắn và đánh giá hiệu năng của các giải thuật mã hóa SAT (Direct Encoding, Order Encoding, Staircase SCL Encoding) cũng như mô hình quy hoạch ràng buộc CP-SAT, chúng tôi sử dụng tập dữ liệu ma trận thưa từ bộ sưu tập chuẩn quốc tế \textbf{SuiteSparse Matrix Collection} (tiền thân là \textit{Harwell--Boeing Sparse Matrix Collection}) \cite{harwellboeing}. Đây là tập dữ liệu đối chuẩn kinh điển trong các nghiên cứu tối ưu tổ hợp đồ thị như Graph Bandwidth, Profile Minimization và Antibandwidth.
 
 Mỗi đồ thị vô hướng đơn $G = (V, E)$ được biểu diễn dưới dạng ma trận kề đối xứng $A \in \{0, 1\}^{n \times n}$ theo định dạng Matrix Market (\texttt{.mtx}) hoặc định dạng tọa độ chuẩn (\texttt{.txt}, \texttt{.rb}):
 \begin{itemize}
@@ -168,10 +172,10 @@ Phân tích các đặc trưng cấu trúc ảnh hưởng sâu sắc đến đ�
 \todo{Lợi: Thông số phần cứng CPU, RAM, hệ điều hành, phiên bản Python, PySAT (Glucose4, CaDiCaL) và Google OR-Tools CP-SAT.}
 
 \subsection{Kết quả và so sánh}
-\todo{Lợi: Biểu đồ trực quan hóa bằng thư viện cnsplots (thời gian giải, số lượng clause, speedup) so sánh giữa Direct Encoding, Order Encoding và CP-SAT. Tùng: Tổng hợp bảng số liệu thực nghiệm SAT vs. CP-SAT.}
+\todo{Lợi: Biểu đồ trực quan hóa bằng thư viện cnsplots (thời gian giải, số lượng clause, speedup) so sánh 4 phương pháp: Direct Encoding, Order Encoding, Staircase SCL Encoding và CP-SAT. Tùng: Tổng hợp bảng số liệu thực nghiệm SAT (Direct, Order, SCL) vs. CP-SAT.}
 
 \subsection{Phân tích và đánh giá}
-\todo{Lợi: Phân tích ưu nhược điểm thực tế giữa SAT và CP-SAT theo mật độ đồ thị; đánh giá hiệu quả giảm thời gian của Symmetry Breaking và Order Encoding.}
+\todo{Lợi: Phân tích ưu nhược điểm thực tế giữa SAT và CP-SAT theo mật độ đồ thị; đánh giá hiệu quả giảm số lượng mệnh đề và thời gian của Symmetry Breaking, Order Encoding, Staircase SCL Encoding và Incremental Search.}
 
 \subsection{Hướng phát triển}
 \todo{Lợi: Đề xuất mở rộng các ràng buộc toàn cục nâng cao, kỹ thuật phân rã đồ thị và áp dụng cho các biến thể bài toán dán nhãn băng thông.}
@@ -182,7 +186,7 @@ Phân tích các đặc trưng cấu trúc ảnh hưởng sâu sắc đến đ�
 
 %% ------------------------------------------------------------
 \section*{CRediT authorship contribution statement}
-\todo{Tường: Conceptualization, Methodology, Software (Graph Loader, Order Encoding), Writing - Original Draft (Chương 1, 3, 4.4), Supervision. Tùng: Software (Direct Encoding, CP-SAT), Writing - Original Draft (Chương 2, 4.1, 4.2, 4.5), Investigation (Bảng số liệu thực nghiệm Chương 5). Lợi: Software (Solver Pipeline, Symmetry Breaking, cnsplots Visualizer), Writing - Original Draft (Chương 4.3, 5, 6), Writing - Review \& Editing.}
+\todo{Tường: Conceptualization, Methodology, Software (Graph Loader, Order Encoding, Incremental Search), Writing - Original Draft (Chương 1, 3, 4.4), Supervision. Tùng: Software (Direct Encoding, Staircase SCL Encoding, CP-SAT), Writing - Original Draft (Chương 2, 4.1, 4.2, 4.5, 4.6), Investigation (Bảng số liệu thực nghiệm Chương 5). Lợi: Software (Solver Pipeline, Hard Timeout, Symmetry Breaking, cnsplots Visualizer), Writing - Original Draft (Chương 4.3, 5, 6), Writing - Review \& Editing.}
 
 \section*{Declaration of competing interest}
 \todo{Tường, Tùng, Lợi: The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.}
@@ -200,6 +204,8 @@ Phân tích các đặc trưng cấu trúc ảnh hưởng sâu sắc đến đ�
 \begin{thebibliography}{1}
 \bibitem{tamura2009}
 \todo{Tường: Trích dẫn bài báo Order Encoding (Tamura et al., 2009).}
+\bibitem{truong2025}
+\todo{Tường: Trích dẫn bài báo Staircase Encoding cho Antibandwidth Problem (Truong, H. X., Van Kieu, T., \& Van To, K., ICAART 2025).}
 \bibitem{harwellboeing}
 \todo{Tường: Trích dẫn tập dữ liệu chuẩn Harwell--Boeing Matrix Collection.}
 \bibitem{ortools}
