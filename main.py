@@ -3,7 +3,7 @@
 Usage:
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --solver cadical153
-    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding order
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding scl
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding cpsat
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --visualize docs/solution_jgl009.png
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --check-k 1
@@ -19,7 +19,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.graph_loader import load_graph, resolve_graph_path
 from src.sat_encoder import AntibandwidthSATEncoder, SUPPORTED_AMO_ENCODINGS
-from src.order_encoder import AntibandwidthOrderEncoder
 from src.solver import AntibandwidthSolver
 from src.cp_solver import AntibandwidthCPSolver, HAS_ORTOOLS
 from src.visualizer import visualize_antibandwidth_labeling, visualize_benchmark_comparison
@@ -39,8 +38,9 @@ def parse_args():
         description="Solve Antibandwidth Problem (ABP) using SAT solvers and CP-SAT."
     )
     parser.add_argument(
-        "-i", "--input",
+        "-i", "--input", "--graph",
         nargs="+",
+        dest="input",
         default=["data/instance/harwell-boeing_v2/can___24.txt"],
         help="One or more paths to graph benchmark files, directories, or glob patterns.",
     )
@@ -53,15 +53,15 @@ def parse_args():
     parser.add_argument(
         "--solver",
         type=str,
-        default="glucose4",
-        help="Solver backend: PySAT solvers ('glucose4', 'cadical153', 'minisat22') or 'cpsat'. Default: glucose4",
+        default="cadical153",
+        help="Solver backend: PySAT solver ('cadical153') or 'cpsat'. Default: cadical153",
     )
     parser.add_argument(
         "--encoding",
         type=str,
-        choices=["direct", "order", "cpsat"],
+        choices=["direct", "scl", "cpsat", "commander", "seqcounter"],
         default="direct",
-        help="Encoding / formulation: 'direct' (Pairwise/CardEnc), 'order' (Order Encoding), or 'cpsat' (Google OR-Tools CP-SAT). Default: direct",
+        help="Encoding / formulation: 'direct', 'scl' (Staircase), 'cpsat', or direct shortcuts 'commander', 'seqcounter'. Default: direct",
     )
     parser.add_argument(
         "--amo-encoding",
@@ -79,7 +79,7 @@ def parse_args():
     parser.add_argument(
         "--method",
         type=str,
-        choices=["binary_search", "linear_search", "direct_optimize"],
+        choices=["binary_search", "linear_search", "incremental", "direct_optimize"],
         default="binary_search",
         help="Search strategy for optimal k. Default: binary_search",
     )
@@ -103,8 +103,8 @@ def parse_args():
     parser.add_argument(
         "--time-limit",
         type=float,
-        default=100.0,
-        help="Time limit in seconds for CP-SAT solver. Default: 100.0s",
+        default=300.0,
+        help="Time limit in seconds for CP-SAT solver. Default: 300.0s",
     )
     parser.add_argument(
         "--visualize",
@@ -125,6 +125,11 @@ def parse_args():
 def main():
     print_banner()
     args = parse_args()
+
+    # Resolve encoding shortcuts for commander and seqcounter
+    if args.encoding in ("commander", "seqcounter"):
+        args.amo_encoding = args.encoding
+        args.encoding = "direct"
 
     # Resolve input path(s) - supports single file, multiple files, directories, or globs
     input_list = args.input if isinstance(args.input, list) else [args.input]
@@ -178,7 +183,7 @@ def main():
                 solver_inst = AntibandwidthCPSolver(
                     g,
                     break_symmetry=break_sym,
-                    time_limit_seconds=getattr(args, "time_limit", 100.0),
+                    time_limit_seconds=getattr(args, "time_limit", 300.0),
                     verbose=False,
                 )
                 mth = "direct_optimize" if args.method == "direct_optimize" else "binary_search"
@@ -191,6 +196,7 @@ def main():
                     amo_encoding=args.amo_encoding,
                     break_symmetry=break_sym,
                     external_solver=args.external_solver,
+                    time_limit_seconds=getattr(args, "time_limit", 300.0),
                     verbose=False,
                 )
                 res = solver_inst.solve(method=args.method)
@@ -246,7 +252,8 @@ def main():
     print(f"    - Edges |E|:    {info['num_edges']}")
     print(f"    - Density:      {info['density']}")
     print(f"    - Degree range: [{info['min_degree']}, {info['max_degree']}]")
-    print(f"    - Encoding:     {args.encoding.upper()}")
+    enc_info = f"{args.encoding.upper()} (AMO: {args.amo_encoding.upper()})" if args.encoding == "direct" else args.encoding.upper()
+    print(f"    - Encoding:     {enc_info}")
 
     # Mode 1: Check single k or export DIMACS
     if args.check_k is not None:
@@ -257,8 +264,9 @@ def main():
             if is_cpsat:
                 print("[Error] Cannot export DIMACS CNF for CP-SAT model.")
                 sys.exit(1)
-            if args.encoding == "order":
-                encoder = AntibandwidthOrderEncoder(graph, break_symmetry=break_sym)
+            if args.encoding in ("scl", "staircase"):
+                from src.scl_encoder import AntibandwidthSCLEncoder
+                encoder = AntibandwidthSCLEncoder(graph, break_symmetry=break_sym)
             else:
                 encoder = AntibandwidthSATEncoder(
                     graph,
@@ -273,7 +281,7 @@ def main():
             cp_solver = AntibandwidthCPSolver(
                 graph,
                 break_symmetry=break_sym,
-                time_limit_seconds=getattr(args, "time_limit", 100.0),
+                time_limit_seconds=getattr(args, "time_limit", 300.0),
                 verbose=False,
             )
             is_sat, labeling, elapsed, n_clauses = cp_solver.check_sat(target_k)
@@ -319,7 +327,7 @@ def main():
         cp_solver = AntibandwidthCPSolver(
             graph,
             break_symmetry=break_sym,
-            time_limit_seconds=getattr(args, "time_limit", 100.0),
+            time_limit_seconds=getattr(args, "time_limit", 300.0),
             verbose=True,
         )
         method = "direct_optimize" if args.method == "direct_optimize" else "binary_search"
@@ -332,6 +340,7 @@ def main():
             amo_encoding=args.amo_encoding,
             break_symmetry=break_sym,
             external_solver=args.external_solver,
+            time_limit_seconds=getattr(args, "time_limit", 300.0),
             verbose=True,
         )
         try:
