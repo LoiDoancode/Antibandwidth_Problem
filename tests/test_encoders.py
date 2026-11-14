@@ -1,10 +1,9 @@
-"""Unit tests for Direct, Order, and Staircase SCL SAT Encoders."""
+"""Unit tests for Direct and Staircase SCL SAT Encoders."""
 
 from pathlib import Path
 import pytest
 import networkx as nx
 from src.sat_encoder import AntibandwidthSATEncoder
-from src.order_encoder import AntibandwidthOrderEncoder
 from src.scl_encoder import AntibandwidthSCLEncoder
 from src.solver import AntibandwidthSolver
 from src.graph_loader import load_graph
@@ -119,41 +118,6 @@ class TestDirectEncoder:
         header = dimacs_path.read_text(encoding="utf-8").splitlines()[0]
         assert header.startswith(f"p cnf {cnf_adv.nv} {len(cnf_adv.clauses)}")
 
-
-
-class TestOrderEncoder:
-    """Tests for AntibandwidthOrderEncoder (Order Encoding)."""
-
-    def test_var_mapping_and_decoding(self):
-        G = nx.path_graph(4)
-        encoder = AntibandwidthOrderEncoder(G)
-        n = 4
-
-        # Test index mapping formula: v * (n - 1) + p
-        for v in range(n):
-            for p in range(1, n):
-                lit = encoder.var(v, p)
-                assert lit == v * (n - 1) + p
-                dec_v, dec_p = encoder.decode_var(lit)
-                assert dec_v == v
-                assert dec_p == p
-
-    def test_encode_generates_monotonicity(self):
-        G = nx.path_graph(3)
-        encoder = AntibandwidthOrderEncoder(G, break_symmetry=False)
-        cnf = encoder.encode(k=1)
-        assert len(cnf.clauses) > 0
-
-    def test_order_symmetry_breaking_unit_clause(self):
-        G = nx.path_graph(4)
-        enc_no_sym = AntibandwidthOrderEncoder(G, break_symmetry=False)
-        cnf_no_sym = enc_no_sym.encode(k=2)
-
-        enc_sym = AntibandwidthOrderEncoder(G, break_symmetry=True)
-        cnf_sym = enc_sym.encode(k=2)
-
-        # Symmetry breaking in order encoding adds 1 unit clause: y_{pivot, ceil(n/2)}
-        assert len(cnf_sym.clauses) == len(cnf_no_sym.clauses) + 1
 
 
 class TestSCLEncoder:

@@ -85,14 +85,14 @@ def parse_args():
         "--solvers",
         nargs="+",
         default=["cadical153"],
-        help="PySAT solver backends to compare (e.g., cadical153, glucose4). Default: cadical153",
+        help="PySAT solver backends to use (default: cadical153).",
     )
     parser.add_argument(
         "--encodings",
         nargs="+",
-        default=["direct", "order", "scl", "cpsat"],
-        choices=["direct", "order", "scl", "cpsat"],
-        help="Encodings / models to compare (direct, order, scl, cpsat). Default: direct order scl cpsat",
+        default=["direct", "scl", "cpsat"],
+        choices=["direct", "scl", "cpsat"],
+        help="Encodings / models to compare (direct, scl, cpsat). Default: direct scl cpsat",
     )
     parser.add_argument(
         "--amo-encodings",
@@ -345,7 +345,7 @@ def run_benchmark():
                         print(f"    Running config [{cfg_name:28s}] ... ", end="", flush=True)
 
                         if n > 100:
-                            if enc == "order" or amo_enc == "pairwise":
+                            if amo_enc == "pairwise":
                                 est_clauses = 2 * n * (n * (n - 1) // 2)
                                 oom_label = f"OOM (n={n} > 100: ~{est_clauses:,d} clauses exceed RAM) [SKIP]"
                             else:
@@ -405,12 +405,9 @@ def run_benchmark():
                             total_clauses = int(shared_clauses.value)
                             if total_clauses == 0:
                                 from src.sat_encoder import AntibandwidthSATEncoder
-                                from src.order_encoder import AntibandwidthOrderEncoder
                                 from src.scl_encoder import AntibandwidthSCLEncoder
                                 k_probe = max(1, n // 4)
-                                if enc == "order":
-                                    total_clauses = len(AntibandwidthOrderEncoder(graph, break_symmetry=sym).encode(k_probe).clauses)
-                                elif enc == "scl":
+                                if enc == "scl":
                                     total_clauses = len(AntibandwidthSCLEncoder(graph, break_symmetry=sym).encode(k_probe).clauses)
                                 else:
                                     total_clauses = AntibandwidthSATEncoder(graph, break_symmetry=sym, amo_encoding=amo_enc).get_stats(k_probe)["total_clauses"]

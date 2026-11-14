@@ -1,8 +1,8 @@
-"""Solver for Antibandwidth Problem using SAT and Binary Search.
+"""Solver for Antibandwidth Problem using SAT and Binary / Incremental Search.
 
-Orchestrates the SAT encoding (Direct Encoding / Order Encoding) and binary search
+Orchestrates the SAT encoding (Direct Encoding / Staircase SCL Encoding) and search
 to find the optimal Antibandwidth B*(G) = max_f min_{(u, v) in E} |f(u) - f(v)|.
-Supports internal PySAT engines (Glucose, CaDiCaL, Minisat) and external solvers (Kissat).
+Supports internal PySAT engine (CaDiCaL 1.5.3) and external solvers (Kissat).
 """
 
 import os
@@ -15,7 +15,6 @@ from pathlib import Path
 import networkx as nx
 
 from .sat_encoder import AntibandwidthSATEncoder
-from .order_encoder import AntibandwidthOrderEncoder
 from .scl_encoder import AntibandwidthSCLEncoder
 
 # Try importing PySAT solvers
@@ -45,8 +44,8 @@ class AntibandwidthSolver:
         """
         Args:
             graph: Undirected graph with vertices 0..n-1.
-            solver_name: Name of PySAT solver (e.g., 'glucose4', 'cadical153', 'minisat22').
-            encoding: 'direct' (Direct Encoding) or 'order' (Order Encoding).
+            solver_name: Name of PySAT solver (default: 'cadical153').
+            encoding: 'direct' (Direct Encoding) or 'scl' (Staircase SCL Encoding).
             amo_encoding: AMO encoding for Direct Encoding ('pairwise', 'seqcounter',
                           'commander', 'totalizer', 'ladder', 'bitwise').
             break_symmetry: Enable symmetry breaking constraints.
@@ -67,9 +66,7 @@ class AntibandwidthSolver:
         self.on_best_found = on_best_found
 
         # Choose encoder based on configuration
-        if self.encoding == "order":
-            self.encoder = AntibandwidthOrderEncoder(graph, break_symmetry=break_symmetry)
-        elif self.encoding in ("scl", "staircase"):
+        if self.encoding in ("scl", "staircase"):
             self.encoder = AntibandwidthSCLEncoder(graph, break_symmetry=break_symmetry)
         else:
             self.encoder = AntibandwidthSATEncoder(

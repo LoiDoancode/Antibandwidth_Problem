@@ -87,7 +87,7 @@ class TestAntibandwidthCPSolver:
     def test_equivalence_with_sat_solver(self):
         # Equivalence check on P6: both SAT and CP-SAT must yield B*(P6) = 3
         G = nx.path_graph(6)
-        sat_solver = AntibandwidthSolver(G, solver_name="glucose4", encoding="order", verbose=False)
+        sat_solver = AntibandwidthSolver(G, solver_name="cadical153", encoding="direct", verbose=False)
         res_sat = sat_solver.solve()
 
         cp_solver = AntibandwidthCPSolver(G, break_symmetry=True, verbose=False)

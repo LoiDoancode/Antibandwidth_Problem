@@ -3,7 +3,7 @@
 Usage:
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --solver cadical153
-    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding order
+    python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding scl
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --encoding cpsat
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --visualize docs/solution_jgl009.png
     python main.py --input data/instance/harwell-boeing_v2/jgl009.txt --check-k 1
@@ -19,7 +19,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from src.graph_loader import load_graph, resolve_graph_path
 from src.sat_encoder import AntibandwidthSATEncoder, SUPPORTED_AMO_ENCODINGS
-from src.order_encoder import AntibandwidthOrderEncoder
 from src.solver import AntibandwidthSolver
 from src.cp_solver import AntibandwidthCPSolver, HAS_ORTOOLS
 from src.visualizer import visualize_antibandwidth_labeling, visualize_benchmark_comparison
@@ -55,14 +54,14 @@ def parse_args():
         "--solver",
         type=str,
         default="cadical153",
-        help="Solver backend: PySAT solvers ('cadical153', 'glucose4', 'minisat22') or 'cpsat'. Default: cadical153",
+        help="Solver backend: PySAT solver ('cadical153') or 'cpsat'. Default: cadical153",
     )
     parser.add_argument(
         "--encoding",
         type=str,
-        choices=["direct", "order", "scl", "cpsat", "commander", "seqcounter"],
+        choices=["direct", "scl", "cpsat", "commander", "seqcounter"],
         default="direct",
-        help="Encoding / formulation: 'direct', 'order', 'scl' (Staircase), 'cpsat', or direct shortcuts 'commander', 'seqcounter'. Default: direct",
+        help="Encoding / formulation: 'direct', 'scl' (Staircase), 'cpsat', or direct shortcuts 'commander', 'seqcounter'. Default: direct",
     )
     parser.add_argument(
         "--amo-encoding",
@@ -265,8 +264,9 @@ def main():
             if is_cpsat:
                 print("[Error] Cannot export DIMACS CNF for CP-SAT model.")
                 sys.exit(1)
-            if args.encoding == "order":
-                encoder = AntibandwidthOrderEncoder(graph, break_symmetry=break_sym)
+            if args.encoding in ("scl", "staircase"):
+                from src.scl_encoder import AntibandwidthSCLEncoder
+                encoder = AntibandwidthSCLEncoder(graph, break_symmetry=break_sym)
             else:
                 encoder = AntibandwidthSATEncoder(
                     graph,

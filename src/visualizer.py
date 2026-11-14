@@ -491,7 +491,7 @@ def visualize_speedup_comparison(
     for d in benchmark_data:
         g = d["graph"]
         enc = d.get("encoding", "direct")
-        solv = d.get("solver", "glucose4")
+        solv = d.get("solver", "cadical153")
         sym_raw = d.get("symmetry", True)
         if isinstance(sym_raw, str):
             sym = sym_raw.strip().lower() in ("true", "1", "yes")
@@ -538,17 +538,11 @@ def visualize_speedup_comparison(
     bar_width = 0.8 / max(1, len(labels))
 
     fig, ax = plt.subplots(figsize=(max(9, len(graphs) * 2), 5.5))
-    # Custom color palette: ORDER_glucose4 is explicitly gold/yellow (#f1c40f)
     speedup_color_map = {
-        "direct_pairwise_glucose4": "#2b5c8f",
         "direct_pairwise_cadical153": "#d95f02",
-        "direct_commander_glucose4": "#27ae60",
         "direct_commander_cadical153": "#2ecc71",
-        "direct_seqcounter_glucose4": "#e67e22",
         "direct_seqcounter_cadical153": "#f39c12",
-        "order_glucose4": "#f1c40f",      # Vang tuoi / Gold Yellow
-        "order_cadical153": "#1b9e77",    # Xanh luc / Teal
-        "direct_glucose4": "#2b5c8f",     # Xanh duong dam / Navy Blue
+        "scl_cadical153": "#1b9e77",      # Xanh luc / Teal
         "direct_cadical153": "#d95f02",   # Cam do / Orange
         "cpsat_cpsat": "#7570b3",         # Tim / Purple
     }
