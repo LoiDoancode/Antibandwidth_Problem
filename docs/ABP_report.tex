@@ -98,7 +98,7 @@ Harwell--Boeing
 
 %% ------------------------------------------------------------
 \section{Mô hình hóa bài toán (SAT \& CP-SAT)}
-\todo{Tùng: 4.1, 4.2, 4.4 và 4.5. Lợi: 4.3 (Tuần 2).}
+\todo{Tùng: 4.1, 4.2, 4.4 và 4.5 (Tuần 2).}
 
 \subsection{Direct Encoding và hệ ràng buộc song ánh}
 \todo{Tùng: Ma trận biến Boolean $x_{i,p}$, các ràng buộc ALO/AMO cho đỉnh và vị trí, tích hợp CardEnc (Sequential Counter / Commander qua PySAT).}
@@ -107,7 +107,68 @@ Harwell--Boeing
 \todo{Tùng: Hệ mệnh đề xung đột khoảng cách $\neg x_{u,p} \lor \neg x_{v,q}$ với mọi $\{u,v\} \in E$ và $|p - q| < k$.}
 
 \subsection{Kỹ thuật phá vỡ đối xứng (Symmetry Breaking)}
-\todo{Lợi: Ghim đỉnh có bậc lớn nhất $v_0$ vào nửa đầu dải vị trí $\neg x_{v_0, p}$ ($\forall p > \lceil n/2 \rceil$), chứng minh giảm 50\% không gian tìm kiếm.}
+
+Trong các bài toán gán nhãn đồ thị tuyến tính, sự tồn tại của các phép biến đổi bảo toàn cấu trúc làm phát sinh nhiều nghiệm đối xứng tương đương nhau, khiến bộ giải SAT (CDCL) phải lãng phí tài nguyên để duyệt lặp lại các nhánh tìm kiếm đẳng cấu --- đặc biệt ở các ngưỡng vô nghiệm (UNSAT).
+
+\subsubsection{Tính đối xứng lật ngược (Reflection Symmetry)}
+Xét đồ thị vô hướng đơn $G = (V, E)$ với $n = |V|$ đỉnh và hàm gán nhãn song ánh $f: V \to \{1, 2, \dots, n\}$. Định nghĩa phép hoán vị lật ngược (reflection permutation) $\sigma: \{1, \dots, n\} \to \{1, \dots, n\}$ bởi:
+\begin{equation}
+    \sigma(p) = n + 1 - p, \qquad \forall p \in \{1, \dots, n\}.
+\end{equation}
+Từ song ánh $f$, ta xây dựng hàm gán nhãn đối ngẫu $f' = \sigma \circ f$, tức là $f'(v) = n + 1 - f(v)$ với mọi $v \in V$.
+
+\medskip
+\noindent\textbf{Định lý 1 (Tính đối xứng lật ngược).}
+\textit{Hàm gán nhãn $f$ là nghiệm hợp lệ của bài toán quyết định $ABP(G, k)$ khi và chỉ khi hàm gán nhãn đối ngẫu $f' = \sigma \circ f$ cũng là nghiệm hợp lệ của $ABP(G, k)$.}
+
+\noindent\textit{Chứng minh.}
+\begin{enumerate}
+    \item \textbf{Tính song ánh:} Do $f$ là song ánh từ $V$ lên $\{1, \dots, n\}$ và $\sigma$ là một phép đối hợp ($\sigma(\sigma(p)) = p$), hợp thành $f' = \sigma \circ f$ cũng là một song ánh từ $V$ lên $\{1, \dots, n\}$.
+    \item \textbf{Bảo toàn khoảng cách cạnh:} Với mọi cạnh $\{u, v\} \in E$, khoảng cách nhãn trong $f'$ thỏa mãn:
+    \begin{equation}
+        |f'(u) - f'(v)| = |(n + 1 - f(u)) - (n + 1 - f(v))| = |-(f(u) - f(v))| = |f(u) - f(v)|.
+    \end{equation}
+    Do đó, $|f'(u) - f'(v)| \ge k \iff |f(u) - f(v)| \ge k$. \hfill $\square$
+\end{enumerate}
+
+\subsubsection{Chọn đỉnh neo và chứng minh thu hẹp 50\% không gian tìm kiếm}
+Trong tổng số $n!$ hoán vị khả dĩ, mỗi nghiệm $f$ đều tương ứng với một nghiệm đối ngẫu $f'$. Ở các ngưỡng $k > B^*(G)$ mang tính chất UNSAT trong quá trình tìm kiếm nhị phân hoặc tìm kiếm tăng dần, SAT Solver phải xây dựng cây chứng minh bác bỏ trên toàn bộ không gian tìm kiếm. Nếu không cắt đối xứng, solver phải khảo sát cả hai nhánh gương đẳng cấu hoàn toàn độc lập, làm tăng gấp đôi thời gian tính toán và lượng mệnh đề xung đột (conflict clauses) cần học.
+
+Để triệt tiêu tính đối xứng này, ta chọn \textbf{đỉnh neo (pivot vertex)} $v_0$ là đỉnh có bậc lớn nhất trong đồ thị nhằm tối đa hóa số lượng ràng buộc khoảng cách được kích hoạt sớm thông qua lan truyền đơn vị (Unit Propagation):
+\begin{equation}
+    v_0 = \arg\max_{v \in V} \deg(v) \implies \deg(v_0) = \Delta(G).
+\end{equation}
+Ta bổ sung ràng buộc phá vỡ đối xứng ép $v_0$ nằm trong nửa đầu của dải vị trí:
+\begin{equation}
+    f(v_0) \le \left\lceil \frac{n}{2} \right\rceil.
+    \label{eq:sym_break}
+\end{equation}
+
+\noindent\textbf{Định lý 2 (Tính bảo toàn nghiệm tối ưu và thu hẹp không gian tìm kiếm).}
+\textit{Bài toán $ABP(G, k)$ có nghiệm khi và chỉ khi $ABP(G, k)$ có nghiệm thỏa mãn điều kiện~\eqref{eq:sym_break}. Hơn nữa, ràng buộc này loại bỏ ít nhất $\lfloor n/2 \rfloor \cdot (n - 1)!$ hoán vị đối xứng, tương ứng thu hẹp xấp xỉ $50\%$ không gian tìm kiếm.}
+
+\noindent\textit{Chứng minh.}
+Chiều đảo là hiển nhiên. Với chiều thuận, giả sử $ABP(G, k)$ tồn tại nghiệm hợp lệ $f$.
+\begin{itemize}
+    \item Nếu $f(v_0) \le \lceil n/2 \rceil$, bản thân $f$ đã thỏa mãn điều kiện~\eqref{eq:sym_break}.
+    \item Nếu $f(v_0) > \lceil n/2 \rceil$, thì $f(v_0) \ge \lceil n/2 \rceil + 1$ (vì $f(v_0) \in \mathbb{Z}$). Xét nghiệm đối ngẫu $f'(v) = n + 1 - f(v)$. Theo Định lý~1, $f'$ cũng là nghiệm hợp lệ của $ABP(G, k)$, đồng thời:
+    \begin{equation}
+        f'(v_0) = n + 1 - f(v_0) \le n + 1 - \left(\left\lceil \frac{n}{2} \right\rceil + 1\right) = n - \left\lceil \frac{n}{2} \right\rceil = \left\lfloor \frac{n}{2} \right\rfloor \le \left\lceil \frac{n}{2} \right\rceil.
+    \end{equation}
+    Vậy $f'$ là nghiệm hợp lệ thỏa mãn điều kiện~\eqref{eq:sym_break}.
+\end{itemize}
+Về kích thước không gian tìm kiếm: trong $n!$ hoán vị, ràng buộc $f(v_0) \le \lceil n/2 \rceil$ loại bỏ toàn bộ $\lfloor n/2 \rfloor$ lựa chọn vị trí nửa sau của $v_0$, chỉ giữ lại $\lceil n/2 \rceil \cdot (n - 1)!$ trạng thái. Với $n$ chẵn, không gian tìm kiếm giảm chính xác $\frac{n/2}{n} = 50\%$; với $n$ lẻ, tỷ lệ không gian còn lại là $\frac{n+1}{2n} \to 50\%$ khi $n$ tăng (vị trí tâm $\lceil n/2 \rceil$ tự ánh xạ vào chính nó qua phép $\sigma$ nên vẫn được giữ lại để bảo toàn tính đầy đủ). \hfill $\square$
+
+\subsubsection{Cài đặt thực tế trên các mô hình SAT và CP-SAT}
+Trong hệ thống thực nghiệm, ràng buộc~\eqref{eq:sym_break} được hiện thực hóa đồng bộ trên cả ba bộ giải (có thể bật/tắt qua cờ \texttt{break\_symmetry}):
+\begin{itemize}
+    \item \textbf{Direct Encoding (\texttt{src/sat\_encoder.py}) và Staircase SCL Encoding (\texttt{src/scl\_encoder.py}):} Bổ sung đúng $\lfloor n/2 \rfloor$ mệnh đề đơn vị (unit clauses) cấm đỉnh neo $v_0$ nhận các vị trí nửa sau:
+    \begin{equation}
+        (\neg x_{v_0, p}), \qquad \forall p \in \left\{\left\lceil \frac{n}{2} \right\rceil + 1, \dots, n\right\}.
+    \end{equation}
+    Nhờ là các mệnh đề đơn vị, solver lập tức gán $\text{False}$ cho các biến này ngay tại Decision Level 0 bằng Unit Propagation và kích hoạt lan truyền sang các biến lân cận của tập láng giềng $N(v_0)$ trước khi phân nhánh.
+    \item \textbf{Mô hình CP-SAT (\texttt{src/cp\_solver.py}):} Thêm trực tiếp ràng buộc miền nguyên tuyến tính \texttt{pos[v\_0] <= ceil(n / 2)} vào đối tượng \texttt{CpModel}.
+\end{itemize}
 
 \subsection{Staircase Sequential Counter Encoding (SCL)}
 \todo{Tùng: Mô hình mã hóa bậc thang (Staircase Encoding) theo Truong et al. \cite{truong2025}: mã hóa ràng buộc khoảng cách cạnh $\{u,v\} \in E$ bằng SCAMO theo cửa sổ trượt $w = k$ kết hợp khối AMO/AMZ trên từng đỉnh và kỹ thuật tách biến đỉnh, giảm số lượng mệnh đề xuống $\mathcal{O}(|V| \cdot n)$.}
@@ -165,7 +226,43 @@ Phân tích các đặc trưng cấu trúc ảnh hưởng sâu sắc đến đ�
 \end{enumerate}
 
 \subsection{Môi trường và cấu hình thực nghiệm}
-\todo{Lợi: Thông số phần cứng CPU, RAM, hệ điều hành, phiên bản Python, PySAT (CaDiCaL 1.5.3) và Google OR-Tools CP-SAT.}
+
+\subsubsection{Môi trường phần cứng và phần mềm}
+Toàn bộ các kịch bản kiểm thử và đối chuẩn hiệu năng (\texttt{benchmark.py}) được thực thi trên cùng một cấu hình máy tính cá nhân nhằm đảm bảo tính công bằng và khả năng tái lập:
+\begin{itemize}
+    \item \textbf{Phần cứng:} Bộ vi xử lý 12th Gen Intel\textsuperscript{\textregistered} Core\textsuperscript{TM} i5-12450H (8 nhân, 12 luồng), bộ nhớ RAM 16~GB (15,71~GB khả dụng).
+    \item \textbf{Hệ điều hành và trình thông dịch:} Windows 64-bit, Python~3.11.9.
+    \item \textbf{Thư viện giải toán và phân tích:} \texttt{python-sat}~1.9.dev15 (sử dụng solver chính \texttt{cadical153} --- CaDiCaL~1.5.3 và mô-đun \texttt{CardEnc}), Google OR-Tools~9.15.6755 (bộ giải CP-SAT cấu hình \texttt{num\_workers = 4}), \texttt{networkx}~3.6.1 và thư viện trực quan hóa khoa học \texttt{cnsplots}~0.8.0.
+\end{itemize}
+
+\subsubsection{Đề cương đánh giá thực nghiệm đa chiều}
+Để đánh giá toàn diện các thuật toán trên tập dữ liệu Harwell--Boeing (Bảng~\ref{tab:harwell_boeing_specs}), bộ công cụ \texttt{benchmark.py} thiết lập ma trận thử nghiệm đa chiều gồm:
+\begin{enumerate}
+    \item \textbf{Nhóm mô hình mã hóa và bộ giải:}
+    \begin{itemize}
+        \item \textit{SAT Direct Encoding} (\texttt{cadical153}) với 3 biến thể ràng buộc AMO: \texttt{pairwise}, \texttt{commander} và \texttt{seqcounter};
+        \item \textit{SAT Staircase SCL Encoding} (\texttt{scl}, \texttt{cadical153});
+        \item \textit{Google OR-Tools CP-SAT} (\texttt{cpsat}, chế độ tối ưu trực tiếp \texttt{direct\_optimize}).
+    \end{itemize}
+    \item \textbf{Chế độ phá vỡ đối xứng:} Mỗi mô hình được chạy song song hai cấu hình có bật (\texttt{Sym}) và tắt (\texttt{NoSym}) kỹ thuật phá vỡ đối xứng.
+    \item \textbf{Ba trục chỉ số đánh giá:}
+    \begin{itemize}
+        \item \textbf{Thời gian giải (Runtime, giây):} Tổng thời gian CPU từ lúc mã hóa, tìm kiếm giá trị tối ưu $B^*(G)$ đến khi kiểm chứng hợp lệ bằng hàm \texttt{verify\_solution}.
+        \item \textbf{Độ phức tạp mệnh đề / ràng buộc (Clause / Constraint Count):} Tổng số mệnh đề CNF tích lũy qua các bước lặp của SAT hoặc tổng số ràng buộc trong CP-SAT.
+        \item \textbf{Tỷ lệ tăng tốc (Speedup):} Đo lường hiệu quả thực tế của kỹ thuật phá vỡ đối xứng theo tỷ số:
+        \begin{equation}
+            \text{Speedup} = \frac{T_{\text{NoSym}}}{T_{\text{Sym}}}.
+        \end{equation}
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Cơ chế Hard Timeout đa tiến trình và theo dõi nghiệm tăng dần}
+Khi giải các ma trận kích thước lớn hoặc mật độ phức tạp như \texttt{can\_\_\_61.txt} và \texttt{ash85.txt}, lời gọi giải CNF trong lõi C++ của SAT Solver có thể kéo dài vượt ngưỡng giới hạn mà cơ chế ngắt mềm (soft interrupt) không phản hồi tức thời. Để khắc phục, pipeline \texttt{benchmark.py} triển khai cơ chế \textbf{Hard Timeout đa tiến trình} kết hợp \textbf{Incremental Tracking}:
+\begin{itemize}
+    \item \textbf{Cô lập tiến trình (\texttt{multiprocessing.Process}):} Mỗi cấu hình SAT được chạy trong một tiến trình con độc lập (\texttt{\_worker\_run\_solver}) với ngưỡng giới hạn cứng \texttt{time\_limit = 300.0}~giây thông qua \texttt{proc.join(timeout=limit\_t)}. Nếu quá thời hạn mà tiến trình chưa kết thúc, tiến trình điều phối cưỡng chế thu hồi bằng \texttt{proc.terminate()}. Với các đồ thị rất lớn ($n > 100$) làm bùng nổ số mệnh đề vượt ngưỡng bộ nhớ/thời gian ở mô hình SAT, hệ thống tự động đánh dấu trạng thái \texttt{OOM} để tránh treo toàn bộ pipeline.
+    \item \textbf{Theo dõi nghiệm và số mệnh đề theo thời gian thực:} Tiến trình con đồng bộ tổng số mệnh đề sinh ra qua biến chia sẻ \texttt{multiprocessing.Value} (\texttt{shared\_clauses}, cập nhật qua callback \texttt{on\_clauses\_generated}) và liên tục đẩy nghiệm khả thi tốt nhất qua hàng đợi \texttt{multiprocessing.Queue} thông qua callback \texttt{on\_best\_found} (gói tin \texttt{PROGRESS} gồm \texttt{optimal\_k}, \texttt{labeling} và tổng số mệnh đề tích lũy).
+    \item \textbf{Tìm kiếm tăng dần kết hợp Hard Timeout:} Trong \texttt{benchmark.py}, chiến lược \texttt{binary\_search} được áp dụng cho Direct Encoding, còn \texttt{incremental} ($k = 1, 2, \dots$) được áp dụng cho Staircase SCL Encoding. Nhờ việc nâng dần cận dưới và ghi nhận nghiệm tốt nhất tức thời qua \texttt{on\_best\_found}, ngay cả khi gặp Hard Timeout ở ngưỡng $k$ lớn, hệ thống vẫn bảo toàn và kiểm chứng được cận dưới khả thi tốt nhất đạt được (\texttt{OK-FEASIBLE/TO}).
+\end{itemize}
 
 \subsection{Kết quả và so sánh}
 \todo{Lợi: Biểu đồ trực quan hóa bằng thư viện cnsplots (thời gian giải, số lượng clause, speedup) so sánh Direct Encoding (Pairwise, Commander, SeqCounter), Staircase SCL Encoding và CP-SAT (có thể kèm kết quả Order Encoding làm mốc tham khảo). Tùng: Tổng hợp bảng số liệu thực nghiệm SAT (Direct, SCL) vs. CP-SAT.}
