@@ -50,51 +50,169 @@ Harwell--Boeing
 %% ------------------------------------------------------------
 
 \section{Tổng quan bài toán Antibandwidth}
-\todo{Tường: Phần mở đầu (Tuần 3) và Chương 1 (Tuần 1).}
+\todo{Tường: Phần mở đầu (Tuần 3).}
 
 \subsection{Giới thiệu}
-\todo{Tường: Giới thiệu bài toán Antibandwidth (ABP), bối cảnh nghiên cứu và tầm quan trọng trong tối ưu hóa tổ hợp.}
+\label{sec:intro}
+Bài toán Antibandwidth (Antibandwidth Problem -- ABP), còn được biết đến dưới tên gọi \emph{bài toán số tách} (separation number) hay \emph{bài toán băng thông đối ngẫu} (dual bandwidth), thuộc họ các bài toán sắp xếp tuyến tính đồ thị (graph layout / linear ordering problems). Cho một đồ thị vô hướng, yêu cầu đặt toàn bộ các đỉnh lên $n$ vị trí liên tiếp trên một đường thẳng, mỗi vị trí đúng một đỉnh, sao cho \emph{khoảng cách nhỏ nhất} giữa hai đỉnh kề nhau là \emph{lớn nhất có thể}. Nói cách khác, ABP tìm cách ``tách xa'' các cặp đỉnh có quan hệ với nhau càng nhiều càng tốt.
+
+Trong khi bài toán Bandwidth -- tìm cách đưa các đỉnh kề nhau \emph{lại gần} nhau -- đã được nghiên cứu sâu rộng từ những năm 1960 gắn với việc thu gọn dải của ma trận thưa, bài toán Antibandwidth được đặt ra muộn hơn và được nghiên cứu một cách hệ thống từ những năm 1980~\cite{leung1984,miller1989}. Bài toán có ý nghĩa thực tiễn rõ rệt trong các tình huống mà sự ``gần nhau'' của các đối tượng có liên hệ gây ra xung đột: phân bổ tần số vô tuyến, giảm nhiễu xuyên âm trong vi mạch, lập lịch truyền thông trong mạng cảm biến, v.v. (xem Mục~\ref{sec:applications}).
+
+Về mặt tính toán, ABP là bài toán NP-khó trên đồ thị tổng quát (Mục~\ref{sec:complexity}). Phần lớn các nghiên cứu trước đây tập trung vào cận lý thuyết cho các lớp đồ thị đặc biệt hoặc các thuật toán heuristic/metaheuristic, vốn không đảm bảo tính tối ưu. Trong công trình này, nhóm tiếp cận ABP theo hướng \emph{giải chính xác}: chuyển bài toán tối ưu thành dãy bài toán quyết định, mã hóa mỗi bài toán quyết định sang công thức logic mệnh đề dạng chuẩn tắc hội (CNF) theo hai phương pháp Direct Encoding và Order Encoding~\cite{tamura2009}, giải bằng các SAT solver hiện đại, đồng thời đối chiếu với mô hình quy hoạch ràng buộc Google OR-Tools CP-SAT trên tập dữ liệu chuẩn Harwell--Boeing.
 
 \subsection{Định nghĩa hình thức bài toán ABP}
-\todo{Tường: Song ánh $f: V \to \{1, \dots, n\}$, hàm mục tiêu $B_A(G) = \max_f \min_{\{u,v\} \in E} |f(u) - f(v)|$.}
+\label{sec:definition}
+Cho đồ thị vô hướng, đơn $G = (V, E)$ với $n = |V|$ đỉnh và $m = |E|$ cạnh. Một \emph{phép gán nhãn tuyến tính} (linear labeling) của $G$ là một song ánh
+\begin{equation}
+f : V \to \{1, 2, \dots, n\},
+\end{equation}
+trong đó $f(v)$ được hiểu là vị trí của đỉnh $v$ trên đường thẳng. Ký hiệu $\Pi(G)$ là tập tất cả các phép gán nhãn như vậy, $|\Pi(G)| = n!$.
+
+\paragraph{Antibandwidth của một phép gán nhãn.} Với $f \in \Pi(G)$, \emph{antibandwidth} của $f$ là khoảng cách nhỏ nhất giữa hai đầu mút của một cạnh:
+\begin{equation}
+B_A(G, f) = \min_{\{u,v\} \in E} |f(u) - f(v)|.
+\end{equation}
+
+\paragraph{Antibandwidth của đồ thị.} Antibandwidth của $G$ là giá trị lớn nhất của $B_A(G, f)$ trên mọi phép gán nhãn:
+\begin{equation}
+\label{eq:abp}
+B_A(G) = \max_{f \in \Pi(G)} \; \min_{\{u,v\} \in E} |f(u) - f(v)|.
+\end{equation}
+Bài toán ABP yêu cầu tính $B_A(G)$ và chỉ ra một phép gán nhãn tối ưu $f^\ast$ đạt giá trị đó. Đây là một bài toán dạng \emph{max--min}.
+
+\paragraph{Ví dụ.} Với đường đi $P_n$ có các đỉnh $v_1 - v_2 - \dots - v_n$, ta có $B_A(P_n) = \lfloor n/2 \rfloor$. Chẳng hạn với $P_6$, phép gán nhãn $f = (v_1, \dots, v_6) \mapsto (1, 4, 2, 5, 3, 6)$ cho các khoảng cách trên cạnh lần lượt là $3, 2, 3, 2, 3$, nên $B_A(P_6, f) = 2$; trong khi phép gán nhãn $(4, 1, 5, 2, 6, 3)$ cho mọi cạnh có khoảng cách $3$ hoặc $4$, đạt giá trị tối ưu $B_A(P_6) = 3$. Cận trên $\lfloor n/2 \rfloor$ được chứng minh tổng quát tại Mục~\ref{sec:bounds}.
 
 \subsection{So sánh với bài toán Bandwidth}
-\todo{Tường: Phân tích tính đối ngẫu giữa Bandwidth Problem (min-max) và Antibandwidth Problem (max-min).}
+\label{sec:bandwidth}
+Bài toán Bandwidth (Bandwidth Minimization Problem) trên cùng không gian lời giải $\Pi(G)$ được định nghĩa là
+\begin{equation}
+B(G) = \min_{f \in \Pi(G)} \; \max_{\{u,v\} \in E} |f(u) - f(v)|.
+\end{equation}
+Có thể thấy hai bài toán là \emph{đối ngẫu} về cấu trúc:
+\begin{itemize}
+  \item \textbf{Bandwidth} là bài toán \emph{min--max}: tìm cách sắp xếp để cạnh \emph{dài nhất} càng ngắn càng tốt, tức đưa các đỉnh kề nhau lại gần nhau. Trên ma trận kề, điều này tương ứng với việc hoán vị hàng/cột để các phần tử khác không tập trung trong một dải hẹp quanh đường chéo chính.
+  \item \textbf{Antibandwidth} là bài toán \emph{max--min}: tìm cách sắp xếp để cạnh \emph{ngắn nhất} càng dài càng tốt, tức đẩy các đỉnh kề nhau ra xa nhau. Trên ma trận kề, điều này tương ứng với việc tạo ra một dải \emph{trống} (toàn số không) quanh đường chéo chính có độ rộng lớn nhất.
+\end{itemize}
+
+Sự đối ngẫu này có thể phát biểu chính xác qua lũy thừa của đường đi. Ký hiệu $P_n^{d}$ là đồ thị trên các vị trí $\{1, \dots, n\}$, trong đó hai vị trí $p \ne q$ kề nhau khi và chỉ khi $|p - q| \le d$. Khi đó:
+\begin{align}
+B(G) \le d \quad &\iff \quad G \text{ đẳng cấu với một đồ thị con của } P_n^{d}, \\
+B_A(G) \ge k \quad &\iff \quad \overline{G} \text{ chứa một đồ thị con đẳng cấu với } P_n^{k-1},
+\end{align}
+trong đó $\overline{G}$ là đồ thị bù của $G$. Điều kiện thứ hai đúng vì $B_A(G, f) \ge k$ nghĩa là mọi cặp đỉnh có vị trí cách nhau không quá $k - 1$ đều \emph{không} kề nhau trong $G$, tức đều kề nhau trong $\overline{G}$. Như vậy, Bandwidth đòi hỏi $G$ ``nằm gọn'' trong một lũy thừa đường đi, còn Antibandwidth đòi hỏi đồ thị bù của $G$ ``bao trọn'' một lũy thừa đường đi.
+
+Tuy có cấu trúc đối ngẫu, hai bài toán không thể quy về nhau một cách tầm thường, và các kỹ thuật heuristic hiệu quả cho Bandwidth (như thuật toán Cuthill--McKee dựa trên duyệt theo chiều rộng) không áp dụng trực tiếp được cho Antibandwidth. Đây là một trong những lý do khiến các phương pháp giải chính xác tổng quát như SAT và CP trở nên hấp dẫn đối với ABP.
 
 \subsection{Độ phức tạp tính toán (NP-hard)}
-\todo{Tường: Phân tích độ phức tạp tính toán của ABP và chứng minh NP-hard trên đồ thị tổng quát.}
+\label{sec:complexity}
+Bài toán Bandwidth đã được Papadimitriou chứng minh là NP-đầy đủ~\cite{papadimitriou1976}. Đối với Antibandwidth, Leung và cộng sự~\cite{leung1984} đã chứng minh phiên bản quyết định của bài toán là NP-đầy đủ trên đồ thị tổng quát. Cụ thể, xét bài toán quyết định:
+
+\begin{quote}
+$ABP(G, k)$: \emph{Cho đồ thị $G$ và số nguyên dương $k$, có tồn tại song ánh $f : V \to \{1, \dots, n\}$ sao cho $|f(u) - f(v)| \ge k$ với mọi $\{u, v\} \in E$ hay không?}
+\end{quote}
+
+\begin{itemize}
+  \item \textbf{$ABP(G, k) \in \mathrm{NP}$:} một phép gán nhãn $f$ là chứng chỉ (certificate) có kích thước đa thức. Việc kiểm tra $f$ là song ánh mất $O(n)$ thời gian và kiểm tra điều kiện khoảng cách trên toàn bộ các cạnh mất $O(m)$ thời gian. Đây chính là cơ sở của hàm kiểm chứng nghiệm độc lập \texttt{verify\_solution} được sử dụng trong hệ thống để xác nhận mọi nghiệm trả về từ SAT solver và CP-SAT.
+  \item \textbf{$ABP(G, k)$ là NP-khó:} được chứng minh bằng phép quy dẫn đa thức từ một bài toán NP-đầy đủ đã biết~\cite{leung1984}. Một cách trực quan, khi $k = 2$, điều kiện $B_A(G) \ge 2$ tương đương với việc đồ thị bù $\overline{G}$ chứa một \emph{đường đi Hamilton} (theo đặc trưng lũy thừa đường đi ở Mục~\ref{sec:bandwidth} với $P_n^{1} = P_n$). Do bài toán đường đi Hamilton là NP-đầy đủ và họ đồ thị bù bao phủ mọi đồ thị, ngay cả trường hợp riêng $k = 2$ của ABP đã là NP-đầy đủ.
+\end{itemize}
+
+Hệ quả là phiên bản tối ưu~\eqref{eq:abp} là NP-khó, và (trừ khi $\mathrm{P} = \mathrm{NP}$) không tồn tại thuật toán thời gian đa thức giải chính xác ABP trên đồ thị tổng quát. Mặt khác, giá trị chính xác hoặc cận chặt của $B_A(G)$ đã được thiết lập cho một số lớp đồ thị có cấu trúc đặc biệt như đường đi, chu trình, lưới hai chiều và siêu khối~\cite{raspaud2009}. Với các đồ thị thưa không có cấu trúc đều -- như các ma trận trong tập Harwell--Boeing được sử dụng trong thực nghiệm -- việc giải chính xác đòi hỏi các phương pháp tìm kiếm tổ hợp mạnh, là động lực cho cách tiếp cận dựa trên SAT và CP-SAT trong công trình này.
 
 %% ------------------------------------------------------------
 \section{Ứng dụng thực tế}
-\todo{Tường: Chương 2 (Tuần 1).}
+\label{sec:applications}
+Điểm chung của các ứng dụng dưới đây là: có một tập đối tượng cần được gán vào một dãy tài nguyên có thứ tự tuyến tính (tần số, vị trí hình học, khe thời gian, địa chỉ lưu trữ), và các cặp đối tượng ``có quan hệ'' với nhau sẽ gây xung đột nếu được gán vào các tài nguyên quá gần nhau. Khi mô hình hóa các đối tượng thành đỉnh, quan hệ xung đột thành cạnh và tài nguyên thành vị trí $\{1, \dots, n\}$, việc tối đa hóa khoảng cách nhỏ nhất giữa các cặp xung đột chính là bài toán ABP~\eqref{eq:abp}.
 
 \subsection{Phân bổ tần số vô tuyến (Radio Frequency Assignment)}
-\todo{Tường: Giãn cách tần số giữa các trạm phát sóng liền kề để giảm thiểu hiện tượng nhiễu giao thoa.}
+Trong mạng thông tin vô tuyến (mạng di động tế bào, phát thanh, truyền hình), mỗi trạm phát cần được cấp một kênh tần số từ một dải kênh có thứ tự. Hai trạm có vùng phủ sóng chồng lấn hoặc nằm gần nhau về mặt địa lý, nếu sử dụng các kênh tần số kề nhau, sẽ gây ra hiện tượng \emph{nhiễu kênh lân cận} (adjacent-channel interference) làm suy giảm chất lượng tín hiệu~\cite{hale1980}. Mô hình hóa mỗi trạm phát là một đỉnh, nối hai đỉnh bằng một cạnh nếu hai trạm có khả năng gây nhiễu cho nhau, và mỗi kênh tần số là một vị trí. Khi mỗi trạm được cấp một kênh riêng biệt, lời giải tối ưu của ABP cho phép cấp phát sao cho mọi cặp trạm có nguy cơ gây nhiễu đều cách nhau ít nhất $B_A(G)$ kênh, tức tối đa hóa ``khoảng an toàn'' tần số trong trường hợp xấu nhất.
 
 \subsection{Giảm nhiễu xuyên âm trong thiết kế VLSI (Crosstalk Minimization)}
-\todo{Tường: Tối ưu khoảng cách hình học giữa các đường mạch dẫn tín hiệu song song trong vi mạch tích hợp.}
+Trong vi mạch tích hợp mật độ cao (VLSI), các đường dẫn tín hiệu chạy song song trên cùng một lớp kim loại sẽ hình thành tụ điện ký sinh giữa chúng. Khi hai đường dẫn liền kề cùng chuyển mạch, năng lượng ghép điện dung gây ra hiện tượng \emph{nhiễu xuyên âm} (crosstalk), có thể làm sai lệch giá trị logic hoặc tăng độ trễ lan truyền. Mức độ ghép giảm nhanh theo khoảng cách hình học giữa các đường dẫn. Xét bài toán sắp xếp thứ tự $n$ đường dẫn vào $n$ rãnh định tuyến (routing tracks) song song: mỗi đường dẫn là một đỉnh, hai đỉnh kề nhau nếu hai tín hiệu tương ứng có khả năng chuyển mạch đồng thời hoặc nhạy cảm với nhiễu của nhau. Lời giải ABP cho thứ tự sắp xếp mà mọi cặp tín hiệu ``nguy hiểm'' được đặt cách nhau ít nhất $B_A(G)$ rãnh, qua đó giảm nhiễu xuyên âm mà không cần tăng thêm diện tích hay chèn thêm đường chắn (shielding).
 
 \subsection{Lập lịch mạng cảm biến và kênh truyền}
-\todo{Tường: Phân chia khe thời gian (time-slot) truyền thông nhằm tránh xung đột dữ liệu trong mạng không dây.}
+Trong mạng cảm biến không dây sử dụng cơ chế đa truy nhập phân chia theo thời gian (TDMA), mỗi nút được cấp một khe thời gian (time-slot) trong một chu kỳ khung để truyền dữ liệu. Hai nút nằm trong phạm vi giao thoa của nhau, nếu truyền trong các khe thời gian liền kề, có thể gây xung đột do sai lệch đồng bộ đồng hồ, độ trễ lan truyền hoặc thời gian chuyển trạng thái thu--phát của phần cứng. Mô hình hóa các nút là đỉnh, quan hệ giao thoa là cạnh và các khe thời gian là vị trí, lời giải ABP cho một lịch truyền trong đó mọi cặp nút có khả năng giao thoa được tách xa nhau về thời gian nhiều nhất có thể. Nhờ đó, lịch truyền chịu được sai lệch đồng bộ tốt hơn và giảm số lần phải truyền lại, góp phần tiết kiệm năng lượng -- yếu tố then chốt của các nút cảm biến dùng pin.
 
 \subsection{Bảo mật dữ liệu và định tuyến ẩn danh}
-\todo{Tường: Phân tán vị trí lưu trữ và định tuyến mạng phân tán chống lại các tấn công phân tích luồng dữ liệu.}
+Trong các hệ thống lưu trữ và truyền thông phân tán, việc đặt các khối dữ liệu có liên quan (ví dụ: các mảnh của cùng một tệp, các bản sao dự phòng, hoặc các bản ghi có tương quan) tại các vị trí lưu trữ hay khe truyền gần nhau tạo điều kiện cho kẻ tấn công suy luận thông tin bằng cách quan sát cục bộ, hoặc khiến một sự cố cục bộ ảnh hưởng đồng thời đến nhiều khối liên quan. Tương tự, trong định tuyến ẩn danh, các gói tin thuộc cùng một luồng nếu được phát đi liên tiếp sẽ dễ bị liên kết với nhau qua phân tích thời gian và lưu lượng (traffic analysis). Mô hình hóa các khối dữ liệu hoặc gói tin là đỉnh, quan hệ tương quan là cạnh và thứ tự lưu trữ/phát đi là vị trí, lời giải ABP cho cách sắp xếp mà mọi cặp đối tượng có tương quan đều bị tách xa nhau tối đa, làm tăng chi phí phân tích liên kết của kẻ tấn công và tăng khả năng chịu lỗi cục bộ của hệ thống.
 
 %% ------------------------------------------------------------
 \section{Chuyển đổi bài toán tối ưu sang bài toán quyết định}
-\todo{Tường: Chương 3 (Tuần 2).}
+\label{sec:opt2dec}
+SAT solver chỉ trả lời câu hỏi có/không về tính thỏa được của một công thức logic, không trực tiếp tối ưu một hàm mục tiêu. Vì vậy, bài toán tối ưu~\eqref{eq:abp} được giải thông qua một dãy bài toán quyết định với ngưỡng $k$ thay đổi, kết hợp với chiến lược tìm kiếm trên $k$. Chương này trình bày cơ sở lý thuyết của phép chuyển đổi, các cận của không gian tìm kiếm và thuật toán điều phối được cài đặt trong mô-đun \texttt{src/solver.py}.
 
 \subsection{Bài toán quyết định $ABP(G,k)$}
-\todo{Tường: Định nghĩa bài toán quyết định: kiểm tra sự tồn tại của song ánh $f$ sao cho $\forall \{u,v\} \in E, |f(u) - f(v)| \ge k$.}
+\label{sec:decision}
+Với mỗi số nguyên dương $k$, bài toán quyết định $ABP(G, k)$ hỏi rằng có tồn tại một song ánh $f : V \to \{1, \dots, n\}$ thỏa mãn
+\begin{equation}
+\label{eq:decision}
+|f(u) - f(v)| \ge k \qquad \forall \{u, v\} \in E
+\end{equation}
+hay không. Ký hiệu $\mathcal{P}(k)$ là mệnh đề ``$ABP(G, k)$ có nghiệm''. Mỗi bài toán $ABP(G, k)$ được mã hóa thành một công thức CNF $\Phi_k$ (bằng Direct Encoding hoặc Order Encoding, Chương~4) sao cho $\Phi_k$ thỏa được khi và chỉ khi $\mathcal{P}(k)$ đúng, và mỗi mô hình (model) của $\Phi_k$ giải mã được thành một phép gán nhãn thỏa mãn~\eqref{eq:decision}.
+
+\paragraph{Tính đơn điệu.} Nếu $f$ thỏa mãn~\eqref{eq:decision} với ngưỡng $k$ thì hiển nhiên $f$ cũng thỏa mãn với mọi ngưỡng $k' \le k$, do $|f(u) - f(v)| \ge k \ge k'$. Do đó $\mathcal{P}$ là một vị từ đơn điệu không tăng theo $k$:
+\begin{equation}
+\mathcal{P}(k) = \text{đúng} \;\Longrightarrow\; \mathcal{P}(k') = \text{đúng}, \quad \forall\, 1 \le k' \le k.
+\end{equation}
+Kết hợp với định nghĩa~\eqref{eq:abp}, ta có $\mathcal{P}(k)$ đúng khi và chỉ khi $k \le B_A(G)$, và
+\begin{equation}
+B_A(G) = \max \{\, k \in \mathbb{Z}^{+} : \mathcal{P}(k) \text{ đúng} \,\}.
+\end{equation}
+Như vậy, dãy giá trị $\mathcal{P}(1), \mathcal{P}(2), \dots$ có dạng $\text{đúng}, \dots, \text{đúng}, \text{sai}, \dots, \text{sai}$, và bài toán tối ưu quy về việc tìm \emph{điểm chuyển} từ đúng sang sai. Đây là điều kiện cần để áp dụng tìm kiếm nhị phân.
+
+\paragraph{Kiểm chứng nghiệm.} Mỗi khi solver trả về SAT, phép gán nhãn giải mã được sẽ được kiểm tra độc lập bởi hàm \texttt{verify\_solution} với độ phức tạp $O(n + m)$: (i) kiểm tra tập giá trị của $f$ đúng bằng $\{1, \dots, n\}$, (ii) kiểm tra mọi cạnh thỏa mãn~\eqref{eq:decision}. Bước kiểm chứng này đảm bảo kết quả cuối cùng đúng đắn ngay cả khi bộ mã hóa hoặc bộ giải mã có lỗi, và được dùng để kiểm thử chéo giữa các mô hình SAT và CP-SAT.
 
 \subsection{Cận trên và cận dưới của $k$}
-\todo{Tường: Xác định chặn cận lý thuyết $k_{min} = 1$ và $k_{max} = \lfloor n/2 \rfloor$.}
+\label{sec:bounds}
+Giả sử $G$ có ít nhất một cạnh ($m \ge 1$). Trường hợp $m = 0$ là tầm thường: mọi song ánh đều hợp lệ và hệ thống xử lý riêng, không gọi đến solver.
+
+\paragraph{Cận dưới $k_{\min} = 1$.} Với mọi song ánh $f$ và mọi cạnh $\{u, v\}$ (với $u \ne v$), ta có $f(u) \ne f(v)$ nên $|f(u) - f(v)| \ge 1$. Do đó $\mathcal{P}(1)$ luôn đúng và $B_A(G) \ge 1$.
+
+\paragraph{Cận trên $k_{\max} = \lfloor n/2 \rfloor$.} \textit{Mệnh đề.} Nếu $G$ không có đỉnh cô lập, tức bậc nhỏ nhất $\delta(G) \ge 1$, thì $B_A(G) \le \lfloor n/2 \rfloor$.
+
+\textit{Chứng minh.} Xét một phép gán nhãn bất kỳ $f$ và đặt $c = \lceil n/2 \rceil$ là vị trí ``giữa''. Gọi $w$ là đỉnh có $f(w) = c$. Vì $\delta(G) \ge 1$, $w$ có ít nhất một đỉnh kề $x$, và $f(x) \in \{1, \dots, n\}$. Khi đó
+\begin{equation}
+|f(w) - f(x)| \le \max\{\, c - 1,\; n - c \,\} = \left\lfloor \frac{n}{2} \right\rfloor,
+\end{equation}
+trong đó đẳng thức cuối được kiểm tra trực tiếp cho hai trường hợp $n$ chẵn ($c - 1 = n/2 - 1$, $n - c = n/2$) và $n$ lẻ ($c - 1 = n - c = (n-1)/2$). Do đó $B_A(G, f) \le \lfloor n/2 \rfloor$ với mọi $f$, suy ra $B_A(G) \le \lfloor n/2 \rfloor$. \hfill$\blacksquare$
+
+Cận trên này là \emph{chặt}: đường đi $P_n$ đạt đúng $B_A(P_n) = \lfloor n/2 \rfloor$ (Mục~\ref{sec:definition}). Mọi đồ thị liên thông với $n \ge 2$ đều thỏa mãn điều kiện $\delta(G) \ge 1$.
+
+\paragraph{Lưu ý về đỉnh cô lập.} Khi $G$ có đỉnh cô lập, cận $\lfloor n/2 \rfloor$ có thể không còn đúng. Ví dụ, đồ thị gồm một cạnh duy nhất $\{u, v\}$ và $n - 2$ đỉnh cô lập có $B_A(G) = n - 1$ (đặt $u$ tại vị trí $1$ và $v$ tại vị trí $n$). Trong trường hợp tổng quát, cận an toàn là $k_{\max} = n - 1$. Mô-đun \texttt{solver.py} hiện sử dụng cận an toàn $n - 1$ cho mọi đồ thị; việc thu hẹp về $\lfloor n/2 \rfloor$ khi $\delta(G) \ge 1$ giảm một nửa khoảng tìm kiếm, tương ứng tiết kiệm khoảng một lần gọi SAT solver trong tìm kiếm nhị phân. Đáng chú ý hơn, mọi giá trị $k > B_A(G)$ đều cho công thức UNSAT -- loại công thức thường tốn kém nhất để chứng minh -- nên một cận trên chặt giúp tránh các lần gọi solver tốn kém không cần thiết.
 
 \subsection{Thuật toán Binary Search}
-\todo{Tường: Thiết kế và phân tích sơ đồ khối thuật toán tìm kiếm nhị phân giá trị $k$ tối ưu kết hợp SAT Solver.}
+\label{sec:binsearch}
+Dựa trên tính đơn điệu của $\mathcal{P}$, giá trị $B_A(G)$ được xác định bằng tìm kiếm nhị phân trên đoạn $[k_{\min}, k_{\max}]$. Thuật toán duy trì bất biến: $\mathcal{P}(k)$ đúng với mọi $k < low$ và sai với mọi $k > high$; đồng thời lưu lại phép gán nhãn tốt nhất tìm được. Các bước cụ thể như sau:
+
+\begin{enumerate}
+  \item \textbf{Khởi tạo:} $low \leftarrow k_{\min}$, $high \leftarrow k_{\max}$, $k^\ast \leftarrow k_{\min}$, $f^\ast \leftarrow \varnothing$.
+  \item \textbf{Lặp} trong khi $low \le high$:
+  \begin{enumerate}
+    \item Chọn ngưỡng giữa $mid \leftarrow \lfloor (low + high) / 2 \rfloor$.
+    \item Sinh công thức CNF $\Phi_{mid}$ cho bài toán $ABP(G, mid)$ bằng bộ mã hóa được chọn (Direct hoặc Order Encoding), sau đó gọi SAT solver (Glucose, CaDiCaL, MiniSat qua PySAT, hoặc Kissat qua tệp DIMACS).
+    \item Nếu kết quả là \textbf{SAT}: giải mã mô hình thành phép gán nhãn $f$; cập nhật $k^\ast \leftarrow mid$, $f^\ast \leftarrow f$; tìm kiếm ở nửa trên: $low \leftarrow mid + 1$.
+    \item Nếu kết quả là \textbf{UNSAT}: ngưỡng quá lớn; tìm kiếm ở nửa dưới: $high \leftarrow mid - 1$.
+  \end{enumerate}
+  \item \textbf{Kiểm chứng:} gọi \texttt{verify\_solution}$(f^\ast, k^\ast)$ để xác nhận tính hợp lệ của nghiệm.
+  \item \textbf{Trả về} $B_A(G) = k^\ast$ cùng phép gán nhãn tối ưu $f^\ast$.
+\end{enumerate}
+
+Khi vòng lặp kết thúc, ta có $high = low - 1 = k^\ast$, trong đó $\mathcal{P}(k^\ast)$ đúng (đã có nghiệm $f^\ast$ chứng minh) và $\mathcal{P}(k^\ast + 1)$ sai (đã có solver chứng minh UNSAT, hoặc $k^\ast = k_{\max}$). Do đó $k^\ast = B_A(G)$ là giá trị tối ưu chính xác.
+
+\paragraph{Phân tích số lần gọi solver.} Mỗi vòng lặp thu hẹp khoảng tìm kiếm còn khoảng một nửa, nên số lần gọi SAT solver không vượt quá $\lfloor \log_2 (k_{\max} - k_{\min} + 1) \rfloor + 1 = O(\log n)$. Để so sánh, hệ thống cũng cài đặt chiến lược \emph{tìm kiếm tuần tự} (Linear Search) duyệt $k$ giảm dần từ $k_{\max}$ và dừng tại giá trị SAT đầu tiên; chiến lược này cần $k_{\max} - B_A(G) + 1$ lần gọi solver, trong đó tất cả các lần gọi trừ lần cuối đều là UNSAT. Với các đồ thị thưa có $B_A(G)$ nhỏ so với $k_{\max}$, tìm kiếm nhị phân giảm đáng kể số lần phải chứng minh UNSAT. Ngược lại, tìm kiếm tuần tự có ưu điểm khi $B_A(G)$ rất gần $k_{\max}$. Người dùng có thể lựa chọn chiến lược qua tham số \texttt{method} (\texttt{binary\_search} hoặc \texttt{linear\_search}) của phương thức \texttt{AntibandwidthSolver.solve}.
 
 \subsection{Incremental SAT}
-\todo{Tường: Tối ưu hóa việc giải gia tăng (Incremental SAT) sử dụng assumptions để tái sử dụng learned clauses qua các vòng lặp kiểm tra $k$.}
+\label{sec:incremental}
+Trong cài đặt hiện tại, mỗi lần kiểm tra một ngưỡng $k$, hệ thống sinh lại toàn bộ công thức $\Phi_k$ và khởi tạo một phiên bản solver mới. Cách làm này đơn giản và cho phép dùng các solver độc lập qua tệp DIMACS, nhưng bỏ phí các \emph{mệnh đề học được} (learned clauses) mà thuật toán CDCL đã tích lũy ở các lần gọi trước. Vì các công thức $\Phi_k$ với các giá trị $k$ khác nhau chia sẻ phần lớn mệnh đề (toàn bộ ràng buộc song ánh và phần lớn ràng buộc khoảng cách), có thể khai thác kỹ thuật \emph{SAT gia tăng} (incremental SAT) với cơ chế giả định (assumptions) như sau.
+
+\paragraph{Phân rã ràng buộc khoảng cách theo từng giá trị $d$.} Điều kiện $|f(u) - f(v)| \ge k$ tương đương với việc cấm $|f(u) - f(v)| = d$ với mọi $d = 1, \dots, k - 1$. Với mỗi $d \in \{1, \dots, k_{\max} - 1\}$, ta đưa vào một biến kích hoạt (selector) $s_d$ và thêm vào solver nhóm mệnh đề ``cấm khoảng cách đúng bằng $d$'' có gắn thêm literal $\neg s_d$. Chẳng hạn, với Direct Encoding:
+\begin{equation}
+\neg s_d \lor \neg x_{u,p} \lor \neg x_{v,q}, \qquad \forall \{u, v\} \in E,\; |p - q| = d.
+\end{equation}
+Khi $s_d$ được gán đúng, các mệnh đề trên có hiệu lực; khi $s_d$ được gán sai, chúng tự động thỏa mãn và không ảnh hưởng đến bài toán.
+
+\paragraph{Giải bằng assumptions.} Toàn bộ mệnh đề song ánh và các nhóm mệnh đề có selector chỉ cần nạp vào solver \emph{một lần duy nhất}. Để kiểm tra $\mathcal{P}(k)$, ta gọi solver với tập giả định $\{s_1, \dots, s_{k-1}\} \cup \{\neg s_k, \dots, \neg s_{k_{\max}-1}\}$. Vì mọi mệnh đề trong solver là cố định và giả định không làm thay đổi tập mệnh đề, các mệnh đề học được ở một lần gọi vẫn là hệ quả logic đúng của công thức và có thể tái sử dụng ở mọi lần gọi tiếp theo trong quá trình tìm kiếm nhị phân. Khi solver trả về UNSAT, tập giả định gây mâu thuẫn (\emph{core}) còn cho biết những giá trị $d$ nào thực sự tham gia vào việc chứng minh vô nghiệm. Thư viện PySAT hỗ trợ trực tiếp cơ chế này thông qua tham số \texttt{assumptions} của phương thức \texttt{solve()} đối với các backend như Glucose và CaDiCaL.
+
+\paragraph{Đánh đổi.} Kỹ thuật gia tăng làm tăng nhẹ số biến (thêm $k_{\max} - 1$ selector) và độ dài mệnh đề (thêm một literal), đồng thời yêu cầu nạp sẵn ràng buộc khoảng cách cho mọi $d < k_{\max}$ ngay từ đầu -- điều này có thể tốn bộ nhớ trên các đồ thị lớn. Ngoài ra, kỹ thuật này không áp dụng được cho các solver độc lập chỉ nhận tệp DIMACS như Kissat. Vì vậy, Incremental SAT được đề xuất như một hướng tối ưu bổ sung cho các backend PySAT, bên cạnh phương án sinh lại công thức đang được sử dụng.
 
 %% ------------------------------------------------------------
 \section{Mô hình hóa bài toán (SAT \& CP-SAT)}
@@ -110,7 +228,120 @@ Harwell--Boeing
 \todo{Lợi: Ghim đỉnh có bậc lớn nhất $v_0$ vào nửa đầu dải vị trí $\neg x_{v_0, p}$ ($\forall p > \lceil n/2 \rceil$), chứng minh giảm 50\% không gian tìm kiếm.}
 
 \subsection{Order Encoding}
-\todo{Tường: Biến mệnh đề $y_{i,p} \iff f(i) \le p$, hệ ràng buộc đơn điệu và lan truyền khoảng cách theo mô hình Tamura et al.}
+\label{sec:order}
+Direct Encoding biểu diễn mỗi vị trí $f(v)$ bằng các biến ``đỉnh $v$ nằm \emph{đúng tại} vị trí $p$''. Cách biểu diễn này trực quan nhưng không phản ánh được \emph{thứ tự} giữa các vị trí: thông tin ``$v$ không nằm tại $p$'' hầu như không giúp suy luận gì về các vị trí lân cận. Trong khi đó, ràng buộc cốt lõi của ABP, $|f(u) - f(v)| \ge k$, lại là một ràng buộc bất đẳng thức trên số nguyên. Order Encoding, được Tamura và cộng sự đề xuất cho việc biên dịch bài toán thỏa mãn ràng buộc tuyến tính hữu hạn sang SAT~\cite{tamura2009}, khắc phục nhược điểm này bằng cách mã hóa trực tiếp các quan hệ thứ tự $f(v) \le p$. Mô hình được cài đặt trong mô-đun \texttt{src/order\_encoder.py} (lớp \texttt{AntibandwidthOrderEncoder}).
+
+\subsubsection{Biến mệnh đề thứ tự}
+Với mỗi đỉnh $v \in V$ và mỗi vị trí $p \in \{1, \dots, n - 1\}$, ta định nghĩa biến Boolean
+\begin{equation}
+y_{v,p} \iff f(v) \le p.
+\end{equation}
+Hai trường hợp biên không cần biến vì giá trị chân lý đã xác định: $f(v) \le 0$ luôn sai và $f(v) \le n$ luôn đúng. Mỗi đỉnh cần $n - 1$ biến, nên tổng số biến là
+\begin{equation}
+|\mathcal{V}_{\text{Order}}| = n(n - 1),
+\end{equation}
+ít hơn $n$ biến so với $n^2$ biến của Direct Encoding. Biến $y_{v,p}$ được ánh xạ sang chỉ số DIMACS theo công thức $v \cdot (n - 1) + p$ (với các đỉnh đánh số từ $0$).
+
+Sự kiện ``đỉnh $v$ nằm đúng tại vị trí $p$'' được biểu diễn qua các biến thứ tự như sau:
+\begin{equation}
+\label{eq:val}
+[f(v) = p] \equiv
+\begin{cases}
+y_{v,1} & \text{nếu } p = 1, \\
+y_{v,p} \land \neg y_{v,p-1} & \text{nếu } 1 < p < n, \\
+\neg y_{v,n-1} & \text{nếu } p = n.
+\end{cases}
+\end{equation}
+
+\subsubsection{Ràng buộc đơn điệu}
+Để các biến $y_{v,p}$ biểu diễn nhất quán một giá trị nguyên, chúng phải thỏa mãn tính đơn điệu: nếu $f(v) \le p$ thì $f(v) \le p + 1$. Ta có các mệnh đề nhị phân
+\begin{equation}
+\neg y_{v,p} \lor y_{v,p+1}, \qquad \forall v \in V,\; 1 \le p \le n - 2,
+\end{equation}
+gồm $n(n - 2)$ mệnh đề. Với ràng buộc này, mỗi dãy $(y_{v,1}, \dots, y_{v,n-1})$ có dạng $\text{sai}, \dots, \text{sai}, \text{đúng}, \dots, \text{đúng}$, nên với mọi phép gán thỏa mãn, mỗi đỉnh nhận \emph{đúng một} giá trị $f(v) \in \{1, \dots, n\}$. Nói cách khác, ràng buộc ``mỗi đỉnh có ít nhất một và nhiều nhất một vị trí'' (ALO/AMO theo đỉnh) của Direct Encoding được đảm bảo một cách tự động mà không cần mệnh đề nào khác.
+
+\subsubsection{Ràng buộc song ánh}
+Vì tập đỉnh và tập vị trí có cùng $n$ phần tử, tính song ánh tương đương với tính đơn ánh: không có hai đỉnh phân biệt nào cùng nằm tại một vị trí. Với mỗi cặp $u < v$ và mỗi vị trí $p$, ta cấm $[f(u) = p] \land [f(v) = p]$; áp dụng~\eqref{eq:val} và luật De Morgan, ta được
+\begin{align}
+&\neg y_{u,1} \lor \neg y_{v,1} && (p = 1), \\
+&\neg y_{u,p} \lor y_{u,p-1} \lor \neg y_{v,p} \lor y_{v,p-1} && (1 < p < n), \\
+&y_{u,n-1} \lor y_{v,n-1} && (p = n),
+\end{align}
+gồm tổng cộng $\binom{n}{2} \cdot n = n^2(n-1)/2$ mệnh đề.
+
+\subsubsection{Ràng buộc khoảng cách}
+Xét một cạnh $\{u, v\} \in E$. Ràng buộc $|f(u) - f(v)| \ge k$ được mã hóa bằng hai nhóm mệnh đề (chỉ cần khi $k \ge 2$, vì $k = 1$ đã được đảm bảo bởi tính song ánh).
+
+\paragraph{(a) Mệnh đề lan truyền khoảng cách.} Nếu $u$ nằm tại vị trí $p$ và $v$ nằm sau $p$, thì $v$ phải nằm từ vị trí $p + k$ trở đi:
+\begin{equation}
+[f(u) = p] \land (f(v) > p) \;\Longrightarrow\; f(v) \ge p + k,
+\end{equation}
+tức $[f(u) = p] \land \neg y_{v,p} \Rightarrow \neg y_{v,p+k-1}$. Chuyển sang dạng CNF, với $1 \le p \le n - k$:
+\begin{align}
+&\neg y_{u,1} \lor y_{v,1} \lor \neg y_{v,k} && (p = 1), \\
+&\neg y_{u,p} \lor y_{u,p-1} \lor y_{v,p} \lor \neg y_{v,p+k-1} && (1 < p \le n - k),
+\end{align}
+cùng với các mệnh đề tương ứng khi hoán đổi vai trò của $u$ và $v$. Nhóm này gồm $2(n - k)$ mệnh đề cho mỗi cạnh. Cần lưu ý rằng điều kiện vế trái phải là $f(u) = p$ chứ không thể nới lỏng thành $f(u) \le p$: chẳng hạn với $k = 2$, $f(u) = 1$, $f(v) = 3$ là một cặp hợp lệ, nhưng tại $p = 2$ ta có $f(u) \le 2 < f(v)$ trong khi $f(v) \ge p + k = 4$ không thỏa mãn. Việc dùng $f(u) \le p$ sẽ loại bỏ nhầm các nghiệm hợp lệ.
+
+\paragraph{(b) Mệnh đề loại trừ cửa sổ.} Mệnh đề lan truyền chỉ được sinh cho $p \le n - k$, vì khi $p > n - k$ vị trí $p + k$ vượt quá $n$. Để bao phủ vùng biên này và tăng cường khả năng lan truyền, mô hình bổ sung các mệnh đề cấm trực tiếp mọi cặp vị trí quá gần nhau:
+\begin{equation}
+\neg\big([f(u) = p] \land [f(v) = q]\big), \qquad \forall\, p \ne q,\; |p - q| < k,
+\end{equation}
+trong đó mỗi sự kiện $[f(\cdot) = \cdot]$ được thay bằng biểu diễn~\eqref{eq:val}, cho các mệnh đề có từ $2$ đến $4$ literal. Số cặp có thứ tự $(p, q)$ thỏa mãn $1 \le |p - q| \le k - 1$ là $2 \sum_{d=1}^{k-1} (n - d) = (k - 1)(2n - k)$, nên nhóm này gồm $(k - 1)(2n - k)$ mệnh đề cho mỗi cạnh.
+
+\subsubsection{Phá vỡ đối xứng và giải mã nghiệm}
+Bài toán ABP bất biến qua phép lật $f(v) \mapsto n + 1 - f(v)$ (Mục~4.3). Trong Order Encoding, điều kiện phá vỡ đối xứng $f(v_0) \le \lceil n/2 \rceil$ cho đỉnh neo $v_0$ có bậc lớn nhất được biểu diễn bằng \emph{đúng một} mệnh đề đơn vị $(y_{v_0, \lceil n/2 \rceil})$; nhờ ràng buộc đơn điệu, mệnh đề này lập tức kéo theo $y_{v_0, q}$ đúng với mọi $q \ge \lceil n/2 \rceil$ ngay tại mức quyết định $0$ của solver.
+
+Khi solver trả về một mô hình, vị trí của mỗi đỉnh được giải mã là
+\begin{equation}
+f(v) = \min \{\, p \in \{1, \dots, n - 1\} : y_{v,p} = \text{đúng} \,\},
+\end{equation}
+với quy ước $f(v) = n$ nếu không có biến nào đúng. Phép gán nhãn sau đó được kiểm chứng độc lập bằng \texttt{verify\_solution} (Mục~\ref{sec:decision}).
+
+\subsubsection{So sánh lý thuyết với Direct Encoding}
+Bảng~\ref{tab:enc-compare} so sánh kích thước công thức của hai phương pháp theo đúng cài đặt trong \texttt{src/sat\_encoder.py} và \texttt{src/order\_encoder.py}, với ngưỡng $2 \le k \le n - 1$ và khi bật phá vỡ đối xứng.
+
+\begin{table}[ht]
+\centering
+\caption{So sánh kích thước công thức CNF giữa Direct Encoding và Order Encoding cho bài toán $ABP(G, k)$.}
+\label{tab:enc-compare}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Thành phần & Direct Encoding & Order Encoding \\
+\midrule
+Ý nghĩa biến & $x_{v,p} \iff f(v) = p$ & $y_{v,p} \iff f(v) \le p$ \\
+Số biến & $n^2$ & $n(n-1)$ \\
+Mỗi đỉnh một vị trí & $n + n\binom{n}{2}$ (ALO + AMO) & $n(n-2)$ (đơn điệu) \\
+Mỗi vị trí một đỉnh & $n\binom{n}{2}$ (AMO) & $n\binom{n}{2}$ \\
+Khoảng cách (mỗi cạnh) & $(k-1)(2n-k)$ & $2(n-k) + (k-1)(2n-k)$ \\
+Phá vỡ đối xứng & $\lfloor n/2 \rfloor$ mệnh đề đơn vị & $1$ mệnh đề đơn vị \\
+Độ dài mệnh đề & $1$ đến $2$ (riêng ALO dài $n$) & $1$ đến $4$ \\
+Giải mã & $p$ sao cho $x_{v,p}$ đúng & $p$ nhỏ nhất sao cho $y_{v,p}$ đúng \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tổng hợp lại, tổng số mệnh đề của hai mô hình là
+\begin{align}
+|\Phi^{\text{Direct}}_k| &= n + n^2(n - 1) + m(k - 1)(2n - k) + \lfloor n/2 \rfloor, \\
+|\Phi^{\text{Order}}_k| &= n(n - 2) + \tfrac{1}{2} n^2(n - 1) + m\big[2(n - k) + (k - 1)(2n - k)\big] + 1.
+\end{align}
+Các công thức này đã được đối chiếu với số mệnh đề thực tế do hai bộ mã hóa sinh ra; chẳng hạn với đường đi $P_9$ và $k = 3$, Direct Encoding sinh $901$ mệnh đề còn Order Encoding sinh $724$ mệnh đề; với chu trình $C_{12}$ và $k = 4$, hai con số tương ứng là $2322$ và $1825$.
+
+Từ bảng so sánh có thể rút ra các nhận xét sau:
+\begin{itemize}
+  \item \textbf{Phần song ánh} chiếm ưu thế về kích thước ($\Theta(n^3)$ mệnh đề) ở cả hai mô hình. Order Encoding chỉ cần khoảng \emph{một nửa} số mệnh đề so với Direct Encoding ($\tfrac{1}{2}n^3$ so với $n^3$), vì nhóm AMO theo đỉnh $n\binom{n}{2}$ được thay thế bằng $n(n-2)$ mệnh đề đơn điệu.
+  \item \textbf{Phần khoảng cách} của Order Encoding lớn hơn Direct Encoding đúng $2m(n - k)$ mệnh đề lan truyền. Đây là phần chi phí bổ sung có chủ đích: các mệnh đề này không cần thiết về mặt ngữ nghĩa (đã được bao hàm bởi nhóm loại trừ cửa sổ) nhưng giúp solver suy luận trên \emph{khoảng} giá trị thay vì từng cặp giá trị rời rạc.
+  \item Do đó, trên đồ thị thưa ($m = O(n)$) với $k$ nhỏ, phần song ánh quyết định và Order Encoding sinh công thức nhỏ hơn rõ rệt. Khi $m$ và $k$ cùng lớn, phần khoảng cách $\Theta(m n k)$ trở nên đáng kể ở cả hai mô hình và khoảng cách về kích thước thu hẹp lại.
+\end{itemize}
+
+\subsubsection{Ưu điểm về lan truyền đơn vị}
+Bên cạnh kích thước công thức, lợi thế quan trọng của Order Encoding nằm ở khả năng \emph{lan truyền đơn vị} (unit propagation) của thuật toán CDCL:
+\begin{enumerate}
+  \item \textbf{Suy luận theo dải.} Trong Direct Encoding, việc gán $x_{v,p} = \text{sai}$ chỉ loại bỏ một giá trị duy nhất khỏi miền của $f(v)$. Trong Order Encoding, việc gán $y_{v,p} = \text{đúng}$ (tức $f(v) \le p$) lập tức kéo theo $y_{v,p+1}, \dots, y_{v,n-1}$ đều đúng qua chuỗi mệnh đề đơn điệu; tương tự $y_{v,p} = \text{sai}$ kéo theo $y_{v,1}, \dots, y_{v,p-1}$ đều sai. Mỗi quyết định của solver thu hẹp cận trên hoặc cận dưới của cả một khoảng giá trị.
+  \item \textbf{Lan truyền khoảng cách.} Khi đã xác định $f(u) = p$ và $f(v) > p$, mệnh đề lan truyền lập tức đẩy cận dưới của $f(v)$ lên $p + k$ (gán $y_{v,p+k-1} = \text{sai}$), và qua chuỗi đơn điệu loại bỏ toàn bộ các vị trí $p + 1, \dots, p + k - 1$ khỏi miền của $f(v)$ chỉ bằng lan truyền, không cần rẽ nhánh. Cơ chế này tương tự kỹ thuật lọc miền giá trị theo cận (bound consistency) trong quy hoạch ràng buộc.
+  \item \textbf{Mệnh đề học được tổng quát hơn.} Do các literal biểu diễn khoảng giá trị ($f(v) \le p$) thay vì giá trị đơn lẻ ($f(v) = p$), các mệnh đề xung đột mà solver học được thường mô tả các vùng không gian tìm kiếm rộng hơn, từ đó cắt tỉa hiệu quả hơn -- đặc biệt quan trọng khi chứng minh UNSAT ở các ngưỡng $k > B_A(G)$ trong tìm kiếm nhị phân.
+\end{enumerate}
 
 \subsection{Mô hình quy hoạch ràng buộc (Google OR-Tools CP-SAT)}
 \todo{Tùng: Biến miền nguyên IntVar $f(u) \in \{1, \dots, n\}$, ràng buộc AddAllDifferent và ràng buộc khoảng cách $|f(u) - f(v)| \ge k$.}
@@ -166,6 +397,16 @@ Harwell--Boeing
 \todo{Tường: Trích dẫn thư viện PySAT.}
 \bibitem{cnsplots}
 \todo{Tường: Trích dẫn thư viện trực quan hóa cnsplots.}
+\bibitem{leung1984}
+J.~Y.-T. Leung, O.~Vornberger, J.~D. Witthoff, On some variants of the bandwidth minimization problem, SIAM Journal on Computing 13~(3) (1984) 650--667.
+\bibitem{miller1989}
+Z.~Miller, D.~Pritikin, On the separation number of a graph, Networks 19~(6) (1989) 651--666.
+\bibitem{papadimitriou1976}
+C.~H. Papadimitriou, The NP-completeness of the bandwidth minimization problem, Computing 16 (1976) 263--270.
+\bibitem{hale1980}
+W.~K. Hale, Frequency assignment: Theory and applications, Proceedings of the IEEE 68~(12) (1980) 1497--1514.
+\bibitem{raspaud2009}
+A.~Raspaud, H.~Schröder, O.~Sýkora, L.~Török, I.~Vrťo, Antibandwidth and cyclic antibandwidth of meshes and hypercubes, Discrete Mathematics 309~(11) (2009) 3541--3552.
 \end{thebibliography}
 
 \end{document}
