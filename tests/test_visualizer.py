@@ -58,8 +58,8 @@ class TestVisualizer:
     @pytest.mark.skipif(not HAS_MATPLOTLIB, reason="matplotlib required for benchmark plot tests")
     def test_visualize_benchmark_comparison_and_speedup(self):
         records = [
-            {"graph": "p6", "config": "DIRECT_glucose4_Sym", "encoding": "direct", "solver": "glucose4", "symmetry": True, "time": 0.01, "clauses": 100},
-            {"graph": "p6", "config": "DIRECT_glucose4_NoSym", "encoding": "direct", "solver": "glucose4", "symmetry": False, "time": 0.02, "clauses": 98},
+            {"graph": "p6", "config": "DIRECT_cadical153_Sym", "encoding": "direct", "solver": "cadical153", "symmetry": True, "time": 0.01, "clauses": 100},
+            {"graph": "p6", "config": "DIRECT_cadical153_NoSym", "encoding": "direct", "solver": "cadical153", "symmetry": False, "time": 0.02, "clauses": 98},
             {"graph": "p6", "config": "CPSAT_Sym", "encoding": "cpsat", "solver": "cpsat", "symmetry": True, "time": 0.008, "clauses": 15},
             {"graph": "p6", "config": "CPSAT_NoSym", "encoding": "cpsat", "solver": "cpsat", "symmetry": False, "time": 0.015, "clauses": 15},
         ]
