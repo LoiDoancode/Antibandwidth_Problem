@@ -8,6 +8,8 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning}
 
 % Ghi chú người phụ trách (xóa lệnh này và các dòng \todo khi viết xong)
 \newcommand{\todo}[1]{\par\noindent\textit{[#1]}\par}
@@ -30,8 +32,7 @@
 \address{Khoa Công nghệ Thông tin, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội}
 
 \begin{abstract}
-\todo{Tường: Viết tóm tắt (Abstract) ở Tuần 3: Tổng quan bài toán ABP, tiếp cận mô hình hóa SAT (Direct Encoding, Staircase SCL Encoding) với solver CaDiCaL và đối chuẩn CP-SAT, chiến lược tìm kiếm (Binary/Incremental Search) kèm Hard Timeout, các kết quả thực nghiệm nổi bật trên tập Harwell--Boeing và kết luận.}
-\vspace{6\baselineskip}
+Bài toán Antibandwidth (ABP) yêu cầu gán các đỉnh của một đồ thị vào các vị trí $1, \dots, n$ trên một đường thẳng sao cho khoảng cách nhỏ nhất giữa hai đỉnh kề nhau là lớn nhất. Đây là một bài toán tối ưu tổ hợp dạng max--min thuộc lớp NP-khó, có ứng dụng trong phân bổ tần số, thiết kế vi mạch và lập lịch truyền thông. Trong công trình này, chúng tôi giải chính xác ABP bằng cách chuyển bài toán tối ưu thành dãy bài toán quyết định $ABP(G, k)$ và mã hóa mỗi bài toán sang logic mệnh đề theo hai phương pháp: Direct Encoding, kèm các mã hóa At-Most-One nâng cao (Sequential Counter, Commander), và Staircase Sequential Counter Encoding (SCL) dựa trên ràng buộc Staircase At-Most-One~\cite{truong2025}. Các công thức được giải bằng CaDiCaL~1.5.3 thông qua PySAT và được đối chiếu với mô hình quy hoạch ràng buộc Google OR-Tools CP-SAT. Hệ thống tích hợp hai chiến lược tìm kiếm ngưỡng tối ưu là Binary Search và Incremental Search, kỹ thuật phá vỡ đối xứng lật ngược, cơ chế Hard Timeout đa tiến trình và bộ kiểm chứng nghiệm độc lập. Thực nghiệm trên tập dữ liệu chuẩn Harwell--Boeing cho thấy Staircase SCL Encoding sinh ít hơn khoảng $2{,}1$ đến $3{,}7$ lần số mệnh đề so với Direct Encoding cơ bản trên các đồ thị giải được tối ưu, đồng thời cho thời gian giải ngắn hơn; trên đồ thị khó \texttt{can\_\_\_61}, trong cùng giới hạn thời gian, SCL và CP-SAT đạt nghiệm $k = 9$ trong khi Direct Encoding chỉ đạt $k = 7$. Mọi nghiệm trả về đều vượt qua bước kiểm chứng độc lập.
 \end{abstract}
 
 \begin{keywords}
@@ -50,19 +51,83 @@ Harwell--Boeing
 %% ------------------------------------------------------------
 
 \section{Tổng quan bài toán Antibandwidth}
-\todo{Tường: Phần mở đầu (Tuần 3) và Chương 1 (Tuần 1).}
+\label{sec:overview}
 
 \subsection{Giới thiệu}
-\todo{Tường: Giới thiệu bài toán Antibandwidth (ABP), bối cảnh nghiên cứu và tầm quan trọng trong tối ưu hóa tổ hợp.}
+\label{sec:intro}
+Bài toán Antibandwidth (Antibandwidth Problem -- ABP), còn được biết đến dưới tên gọi \emph{bài toán số tách} (separation number) hay \emph{bài toán băng thông đối ngẫu} (dual bandwidth), thuộc họ các bài toán sắp xếp tuyến tính đồ thị (graph layout / linear ordering problems). Cho một đồ thị vô hướng, yêu cầu đặt toàn bộ các đỉnh lên $n$ vị trí liên tiếp trên một đường thẳng, mỗi vị trí đúng một đỉnh, sao cho \emph{khoảng cách nhỏ nhất} giữa hai đỉnh kề nhau là \emph{lớn nhất có thể}. Nói cách khác, ABP tìm cách ``tách xa'' các cặp đỉnh có quan hệ với nhau càng nhiều càng tốt.
+
+Trong khi bài toán Bandwidth -- tìm cách đưa các đỉnh kề nhau \emph{lại gần} nhau -- đã được nghiên cứu sâu rộng từ những năm 1960 gắn với việc thu gọn dải của ma trận thưa, bài toán Antibandwidth được đặt ra muộn hơn và được nghiên cứu một cách hệ thống từ những năm 1980~\cite{leung1984,miller1989}. Bài toán có ý nghĩa thực tiễn rõ rệt trong các tình huống mà sự ``gần nhau'' của các đối tượng có liên hệ gây ra xung đột, chẳng hạn phân bổ tần số vô tuyến, giảm nhiễu xuyên âm trong vi mạch hay lập lịch truyền thông trong mạng cảm biến (Chương~2).
+
+Về mặt tính toán, ABP là bài toán NP-khó trên đồ thị tổng quát (Mục~\ref{sec:complexity}). Phần lớn các nghiên cứu trước đây tập trung vào cận lý thuyết cho các lớp đồ thị đặc biệt hoặc các thuật toán heuristic, vốn không đảm bảo tính tối ưu. Gần đây, hướng tiếp cận dựa trên SAT cho thấy nhiều triển vọng nhờ sự phát triển mạnh mẽ của các SAT solver theo thuật toán CDCL (Conflict-Driven Clause Learning) và các kỹ thuật mã hóa chuyên biệt cho ràng buộc dạng ``cửa sổ trượt'' xuất hiện trong ABP~\cite{truong2025}.
+
+\paragraph{Đóng góp của công trình.} Trong báo cáo này, nhóm tiếp cận ABP theo hướng \emph{giải chính xác} với các đóng góp chính sau:
+\begin{itemize}
+  \item Xây dựng quy trình chuyển bài toán tối ưu thành dãy bài toán quyết định $ABP(G, k)$, kèm phân tích cận của không gian tìm kiếm và hai chiến lược tìm kiếm ngưỡng tối ưu: Binary Search và Incremental Search (Chương~\ref{sec:opt2dec}).
+  \item Cài đặt và so sánh hai phương pháp mã hóa SAT: Direct Encoding với các mã hóa At-Most-One (AMO) nâng cao (Sequential Counter, Commander) và Staircase Sequential Counter Encoding (SCL)~\cite{truong2025}; xây dựng mô hình đối chuẩn bằng Google OR-Tools CP-SAT~\cite{ortools} (Chương~4).
+  \item Áp dụng kỹ thuật phá vỡ đối xứng lật ngược, cơ chế Hard Timeout đa tiến trình và bộ kiểm chứng nghiệm độc lập để đảm bảo tính đúng đắn và khả năng mở rộng của hệ thống.
+  \item Đánh giá thực nghiệm trên tập dữ liệu chuẩn Harwell--Boeing~\cite{harwellboeing} với SAT solver CaDiCaL thông qua thư viện PySAT~\cite{pysat}, trực quan hóa kết quả bằng thư viện \texttt{cnsplots}~\cite{cnsplots} (Chương~5).
+\end{itemize}
+
+\paragraph{Cấu trúc báo cáo.} Phần còn lại của báo cáo được tổ chức như sau. Chương~1 trình bày định nghĩa hình thức, quan hệ đối ngẫu với bài toán Bandwidth và độ phức tạp tính toán của ABP. Chương~2 giới thiệu các ứng dụng thực tế. Chương~3 trình bày phép chuyển đổi sang bài toán quyết định và các chiến lược tìm kiếm. Chương~4 mô tả chi tiết các mô hình mã hóa SAT, kỹ thuật phá vỡ đối xứng và mô hình CP-SAT. Chương~5 trình bày kết quả thực nghiệm và phân tích. Chương~6 tổng kết và nêu hướng phát triển.
 
 \subsection{Định nghĩa hình thức bài toán ABP}
-\todo{Tường: Song ánh $f: V \to \{1, \dots, n\}$, hàm mục tiêu $B_A(G) = \max_f \min_{\{u,v\} \in E} |f(u) - f(v)|$.}
+\label{sec:definition}
+Cho đồ thị vô hướng, đơn $G = (V, E)$ với $n = |V|$ đỉnh và $m = |E|$ cạnh. Một \emph{phép gán nhãn tuyến tính} (linear labeling) của $G$ là một song ánh
+\begin{equation}
+f : V \to \{1, 2, \dots, n\},
+\end{equation}
+trong đó $f(v)$ được hiểu là vị trí của đỉnh $v$ trên đường thẳng. Ký hiệu $\Pi(G)$ là tập tất cả các phép gán nhãn như vậy, $|\Pi(G)| = n!$.
+
+\paragraph{Antibandwidth của một phép gán nhãn.} Với $f \in \Pi(G)$, \emph{antibandwidth} của $f$ là khoảng cách nhỏ nhất giữa hai đầu mút của một cạnh:
+\begin{equation}
+B_A(G, f) = \min_{\{u,v\} \in E} |f(u) - f(v)|.
+\end{equation}
+
+\paragraph{Antibandwidth của đồ thị.} Antibandwidth của $G$ là giá trị lớn nhất của $B_A(G, f)$ trên mọi phép gán nhãn:
+\begin{equation}
+\label{eq:abp}
+B_A(G) = \max_{f \in \Pi(G)} \; \min_{\{u,v\} \in E} |f(u) - f(v)|.
+\end{equation}
+Bài toán ABP yêu cầu tính $B_A(G)$ (trong các chương sau cũng ký hiệu là $B^*(G)$) và chỉ ra một phép gán nhãn tối ưu $f^\ast$ đạt giá trị đó. Đây là một bài toán dạng \emph{max--min}.
+
+\paragraph{Ví dụ.} Với đường đi $P_n$ có các đỉnh $v_1 - v_2 - \dots - v_n$, ta có $B_A(P_n) = \lfloor n/2 \rfloor$. Chẳng hạn với $P_6$, phép gán nhãn $(f(v_1), \dots, f(v_6)) = (1, 4, 2, 5, 3, 6)$ cho các khoảng cách trên cạnh lần lượt là $3, 2, 3, 2, 3$, nên $B_A(P_6, f) = 2$; trong khi phép gán nhãn $(4, 1, 5, 2, 6, 3)$ cho mọi cạnh có khoảng cách $3$ hoặc $4$, đạt giá trị tối ưu $B_A(P_6) = 3$. Cận trên $\lfloor n/2 \rfloor$ được chứng minh tổng quát tại Mục~\ref{sec:bounds}.
 
 \subsection{So sánh với bài toán Bandwidth}
-\todo{Tường: Phân tích tính đối ngẫu giữa Bandwidth Problem (min-max) và Antibandwidth Problem (max-min).}
+\label{sec:bandwidth}
+Bài toán Bandwidth (Bandwidth Minimization Problem) trên cùng không gian lời giải $\Pi(G)$ được định nghĩa là
+\begin{equation}
+B(G) = \min_{f \in \Pi(G)} \; \max_{\{u,v\} \in E} |f(u) - f(v)|.
+\end{equation}
+Có thể thấy hai bài toán là \emph{đối ngẫu} về cấu trúc:
+\begin{itemize}
+  \item \textbf{Bandwidth} là bài toán \emph{min--max}: tìm cách sắp xếp để cạnh \emph{dài nhất} càng ngắn càng tốt, tức đưa các đỉnh kề nhau lại gần nhau. Trên ma trận kề, điều này tương ứng với việc hoán vị hàng/cột để các phần tử khác không tập trung trong một dải hẹp quanh đường chéo chính.
+  \item \textbf{Antibandwidth} là bài toán \emph{max--min}: tìm cách sắp xếp để cạnh \emph{ngắn nhất} càng dài càng tốt, tức đẩy các đỉnh kề nhau ra xa nhau. Trên ma trận kề, điều này tương ứng với việc tạo ra một dải \emph{trống} (toàn số không) quanh đường chéo chính có độ rộng lớn nhất.
+\end{itemize}
+
+Sự đối ngẫu này có thể phát biểu chính xác qua lũy thừa của đường đi. Ký hiệu $P_n^{d}$ là đồ thị trên các vị trí $\{1, \dots, n\}$, trong đó hai vị trí $p \ne q$ kề nhau khi và chỉ khi $|p - q| \le d$. Khi đó:
+\begin{align}
+B(G) \le d \quad &\iff \quad G \text{ đẳng cấu với một đồ thị con của } P_n^{d}, \\
+B_A(G) \ge k \quad &\iff \quad \overline{G} \text{ chứa một đồ thị con đẳng cấu với } P_n^{k-1},
+\end{align}
+trong đó $\overline{G}$ là đồ thị bù của $G$. Điều kiện thứ hai đúng vì $B_A(G, f) \ge k$ nghĩa là mọi cặp đỉnh có vị trí cách nhau không quá $k - 1$ đều \emph{không} kề nhau trong $G$, tức đều kề nhau trong $\overline{G}$. Như vậy, Bandwidth đòi hỏi $G$ ``nằm gọn'' trong một lũy thừa đường đi, còn Antibandwidth đòi hỏi đồ thị bù của $G$ ``bao trọn'' một lũy thừa đường đi.
+
+Tuy có cấu trúc đối ngẫu, hai bài toán không thể quy về nhau một cách tầm thường, và các heuristic hiệu quả cho Bandwidth (như thuật toán Cuthill--McKee dựa trên duyệt theo chiều rộng) không áp dụng trực tiếp được cho Antibandwidth. Đây là một trong những lý do khiến các phương pháp giải chính xác tổng quát như SAT và CP trở nên hấp dẫn đối với ABP.
 
 \subsection{Độ phức tạp tính toán (NP-hard)}
-\todo{Tường: Phân tích độ phức tạp tính toán của ABP và chứng minh NP-hard trên đồ thị tổng quát.}
+\label{sec:complexity}
+Bài toán Bandwidth đã được Papadimitriou chứng minh là NP-đầy đủ~\cite{papadimitriou1976}. Đối với Antibandwidth, Leung và cộng sự~\cite{leung1984} đã chứng minh phiên bản quyết định của bài toán là NP-đầy đủ trên đồ thị tổng quát. Cụ thể, xét bài toán quyết định:
+
+\begin{quote}
+$ABP(G, k)$: \emph{Cho đồ thị $G$ và số nguyên dương $k$, có tồn tại song ánh $f : V \to \{1, \dots, n\}$ sao cho $|f(u) - f(v)| \ge k$ với mọi $\{u, v\} \in E$ hay không?}
+\end{quote}
+
+\begin{itemize}
+  \item \textbf{$ABP(G, k) \in \mathrm{NP}$:} một phép gán nhãn $f$ là chứng chỉ (certificate) có kích thước đa thức. Việc kiểm tra $f$ là song ánh mất $O(n)$ thời gian và kiểm tra điều kiện khoảng cách trên toàn bộ các cạnh mất $O(m)$ thời gian. Đây chính là cơ sở của hàm kiểm chứng nghiệm độc lập \texttt{verify\_solution} được sử dụng trong hệ thống để xác nhận mọi nghiệm trả về từ SAT solver và CP-SAT.
+  \item \textbf{$ABP(G, k)$ là NP-khó:} xét trường hợp riêng $k = 2$. Theo đặc trưng lũy thừa đường đi ở Mục~\ref{sec:bandwidth} với $P_n^{1} = P_n$, ta có $B_A(G) \ge 2$ khi và chỉ khi đồ thị bù $\overline{G}$ chứa một \emph{đường đi Hamilton}. Với một đồ thị $H$ bất kỳ, đặt $G = \overline{H}$ (xây dựng được trong thời gian đa thức), khi đó $H$ có đường đi Hamilton khi và chỉ khi $ABP(G, 2)$ có nghiệm. Do bài toán đường đi Hamilton là NP-đầy đủ, ngay cả trường hợp riêng $k = 2$ của ABP đã là NP-đầy đủ.
+\end{itemize}
+
+Hệ quả là phiên bản tối ưu~\eqref{eq:abp} là NP-khó, và (trừ khi $\mathrm{P} = \mathrm{NP}$) không tồn tại thuật toán thời gian đa thức giải chính xác ABP trên đồ thị tổng quát. Mặt khác, giá trị chính xác hoặc cận chặt của $B_A(G)$ đã được thiết lập cho một số lớp đồ thị có cấu trúc đặc biệt như đường đi, chu trình, lưới hai chiều và siêu khối~\cite{raspaud2009}. Với các đồ thị thưa không có cấu trúc đều -- như các ma trận trong tập Harwell--Boeing được sử dụng trong thực nghiệm -- việc giải chính xác đòi hỏi các phương pháp tìm kiếm tổ hợp mạnh, là động lực cho cách tiếp cận dựa trên SAT và CP-SAT trong công trình này.
 
 %% ------------------------------------------------------------
 \section{Ứng dụng thực tế}
@@ -82,19 +147,173 @@ Harwell--Boeing
 
 %% ------------------------------------------------------------
 \section{Chuyển đổi bài toán tối ưu sang bài toán quyết định}
-\todo{Tường: Chương 3 (Tuần 2).}
+\label{sec:opt2dec}
+SAT solver chỉ trả lời câu hỏi có/không về tính thỏa được của một công thức logic, không trực tiếp tối ưu một hàm mục tiêu. Vì vậy, bài toán tối ưu~\eqref{eq:abp} được giải thông qua một dãy bài toán quyết định với ngưỡng $k$ thay đổi, kết hợp với một chiến lược tìm kiếm trên $k$. Chương này trình bày cơ sở lý thuyết của phép chuyển đổi, các cận của không gian tìm kiếm và hai chiến lược tìm kiếm chính -- Binary Search và Incremental Search -- được cài đặt trong mô-đun \texttt{src/solver.py} (lớp \texttt{AntibandwidthSolver}).
 
 \subsection{Bài toán quyết định $ABP(G,k)$}
-\todo{Tường: Định nghĩa bài toán quyết định: kiểm tra sự tồn tại của song ánh $f$ sao cho $\forall \{u,v\} \in E, |f(u) - f(v)| \ge k$.}
+\label{sec:decision}
+Với mỗi số nguyên dương $k$, bài toán quyết định $ABP(G, k)$ hỏi rằng có tồn tại một song ánh $f : V \to \{1, \dots, n\}$ thỏa mãn
+\begin{equation}
+\label{eq:decision}
+|f(u) - f(v)| \ge k \qquad \forall \{u, v\} \in E
+\end{equation}
+hay không. Ký hiệu $\mathcal{P}(k)$ là mệnh đề ``$ABP(G, k)$ có nghiệm''. Mỗi bài toán $ABP(G, k)$ được mã hóa thành một công thức CNF $\Phi_k$ (bằng Direct Encoding hoặc Staircase SCL Encoding, Chương~4) sao cho $\Phi_k$ thỏa được khi và chỉ khi $\mathcal{P}(k)$ đúng, và mỗi mô hình (model) của $\Phi_k$ giải mã được thành một phép gán nhãn thỏa mãn~\eqref{eq:decision}.
+
+\paragraph{Tính đơn điệu.} Nếu $f$ thỏa mãn~\eqref{eq:decision} với ngưỡng $k$ thì hiển nhiên $f$ cũng thỏa mãn với mọi ngưỡng $k' \le k$, do $|f(u) - f(v)| \ge k \ge k'$. Do đó $\mathcal{P}$ là một vị từ đơn điệu không tăng theo $k$:
+\begin{equation}
+\mathcal{P}(k) = \text{đúng} \;\Longrightarrow\; \mathcal{P}(k') = \text{đúng}, \quad \forall\, 1 \le k' \le k.
+\end{equation}
+Kết hợp với định nghĩa~\eqref{eq:abp}, ta có $\mathcal{P}(k)$ đúng khi và chỉ khi $k \le B_A(G)$, và
+\begin{equation}
+B_A(G) = \max \{\, k \in \mathbb{Z}^{+} : \mathcal{P}(k) \text{ đúng} \,\}.
+\end{equation}
+Như vậy, dãy giá trị $\mathcal{P}(1), \mathcal{P}(2), \dots$ có dạng $\text{đúng}, \dots, \text{đúng}, \text{sai}, \dots, \text{sai}$, và bài toán tối ưu quy về việc tìm \emph{điểm chuyển} từ đúng sang sai. Tính đơn điệu này là cơ sở cho cả hai chiến lược tìm kiếm ở Mục~\ref{sec:binsearch} và Mục~\ref{sec:incsearch}: mọi lần giải SAT cho ta một \emph{cận dưới} mới ($B_A(G) \ge k$), còn mọi lần giải UNSAT cho ta một \emph{cận trên} mới ($B_A(G) \le k - 1$).
+
+\paragraph{Kiểm chứng nghiệm.} Mỗi khi solver trả về SAT, phép gán nhãn giải mã được sẽ được kiểm tra độc lập bởi hàm \texttt{verify\_solution} với độ phức tạp $O(n + m)$: (i) kiểm tra tập giá trị của $f$ đúng bằng $\{1, \dots, n\}$, (ii) kiểm tra mọi cạnh thỏa mãn~\eqref{eq:decision} và trả về khoảng cách nhỏ nhất thực tế. Bước kiểm chứng này đảm bảo kết quả cuối cùng đúng đắn ngay cả khi bộ mã hóa hoặc bộ giải mã có lỗi, và được dùng để kiểm thử chéo giữa các mô hình SAT (Direct, Staircase SCL) và CP-SAT.
 
 \subsection{Cận trên và cận dưới của $k$}
-\todo{Tường: Xác định chặn cận lý thuyết $k_{min} = 1$ và $k_{max} = \lfloor n/2 \rfloor$.}
+\label{sec:bounds}
+Giả sử $G$ có ít nhất một cạnh ($m \ge 1$). Trường hợp $m = 0$ là tầm thường: mọi song ánh đều hợp lệ và hệ thống xử lý riêng mà không gọi đến solver.
+
+\paragraph{Cận dưới $k_{\min} = 1$.} Với mọi song ánh $f$ và mọi cạnh $\{u, v\}$ (với $u \ne v$), ta có $f(u) \ne f(v)$ nên $|f(u) - f(v)| \ge 1$. Do đó $\mathcal{P}(1)$ luôn đúng và $B_A(G) \ge 1$.
+
+\paragraph{Cận trên $k_{\max} = \lfloor n/2 \rfloor$.} \textit{Mệnh đề.} Nếu $G$ không có đỉnh cô lập, tức bậc nhỏ nhất $\delta(G) \ge 1$, thì $B_A(G) \le \lfloor n/2 \rfloor$.
+
+\textit{Chứng minh.} Xét một phép gán nhãn bất kỳ $f$ và đặt $c = \lceil n/2 \rceil$ là vị trí ``giữa''. Gọi $w$ là đỉnh có $f(w) = c$. Vì $\delta(G) \ge 1$, $w$ có ít nhất một đỉnh kề $x$, và $f(x) \in \{1, \dots, n\}$. Khi đó
+\begin{equation}
+|f(w) - f(x)| \le \max\{\, c - 1,\; n - c \,\} = \left\lfloor \frac{n}{2} \right\rfloor,
+\end{equation}
+trong đó đẳng thức cuối được kiểm tra trực tiếp cho hai trường hợp $n$ chẵn ($c - 1 = n/2 - 1$, $n - c = n/2$) và $n$ lẻ ($c - 1 = n - c = (n-1)/2$). Do đó $B_A(G, f) \le \lfloor n/2 \rfloor$ với mọi $f$, suy ra $B_A(G) \le \lfloor n/2 \rfloor$. \hfill$\square$
+
+Cận trên này là \emph{chặt}: đường đi $P_n$ đạt đúng $B_A(P_n) = \lfloor n/2 \rfloor$ (Mục~\ref{sec:definition}). Mọi đồ thị liên thông với $n \ge 2$ đều thỏa mãn điều kiện $\delta(G) \ge 1$.
+
+\paragraph{Lưu ý về đỉnh cô lập.} Khi $G$ có đỉnh cô lập, cận $\lfloor n/2 \rfloor$ có thể không còn đúng. Ví dụ, đồ thị gồm một cạnh duy nhất $\{u, v\}$ và $n - 2$ đỉnh cô lập có $B_A(G) = n - 1$ (đặt $u$ tại vị trí $1$ và $v$ tại vị trí $n$). Trong trường hợp tổng quát, cận an toàn là $k_{\max} = n - 1$; đây cũng là cận mà mô-đun \texttt{solver.py} hiện sử dụng cho mọi đồ thị. Việc thu hẹp về $\lfloor n/2 \rfloor$ khi $\delta(G) \ge 1$ giảm một nửa khoảng tìm kiếm, tương ứng tiết kiệm khoảng một lần gọi solver trong Binary Search. Đáng chú ý hơn, mọi giá trị $k > B_A(G)$ đều cho công thức UNSAT -- loại công thức thường tốn kém nhất để chứng minh -- nên một cận trên chặt giúp tránh các lần gọi solver tốn kém không cần thiết.
 
 \subsection{Thuật toán Binary Search}
-\todo{Tường: Thiết kế và phân tích sơ đồ khối thuật toán tìm kiếm nhị phân giá trị $k$ tối ưu kết hợp SAT Solver.}
+\label{sec:binsearch}
+Dựa trên tính đơn điệu của $\mathcal{P}$, giá trị $B_A(G)$ có thể được xác định bằng tìm kiếm nhị phân trên đoạn $[k_{\min}, k_{\max}]$. Thuật toán duy trì bất biến: $\mathcal{P}(k)$ đúng với mọi $k < low$ và sai với mọi $k > high$; đồng thời lưu lại phép gán nhãn tốt nhất tìm được. Sơ đồ khối của thuật toán được minh họa trên Hình~\ref{fig:binsearch}; các bước cụ thể như sau:
+
+\begin{enumerate}
+  \item \textbf{Khởi tạo:} $low \leftarrow k_{\min}$, $high \leftarrow k_{\max}$, $k^\ast \leftarrow k_{\min}$, $f^\ast \leftarrow \varnothing$.
+  \item \textbf{Lặp} trong khi $low \le high$ và chưa hết thời gian:
+  \begin{enumerate}
+    \item Chọn ngưỡng giữa $mid \leftarrow \lfloor (low + high) / 2 \rfloor$.
+    \item Sinh công thức CNF $\Phi_{mid}$ bằng bộ mã hóa được chọn, sau đó gọi SAT solver (mặc định CaDiCaL~1.5.3 qua PySAT, hoặc solver độc lập như Kissat qua tệp DIMACS) với thời gian còn lại.
+    \item Nếu kết quả là \textbf{SAT}: giải mã mô hình thành phép gán nhãn $f$; cập nhật $k^\ast \leftarrow mid$, $f^\ast \leftarrow f$; tìm kiếm ở nửa trên: $low \leftarrow mid + 1$.
+    \item Nếu kết quả là \textbf{UNSAT}: ngưỡng quá lớn; tìm kiếm ở nửa dưới: $high \leftarrow mid - 1$.
+  \end{enumerate}
+  \item \textbf{Kiểm chứng:} gọi \texttt{verify\_solution}$(f^\ast, k^\ast)$ để xác nhận tính hợp lệ của nghiệm.
+  \item \textbf{Trả về} $k^\ast$ cùng phép gán nhãn $f^\ast$.
+\end{enumerate}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node distance=6mm and 10mm,
+  every node/.style={font=\small},
+  proc/.style={rectangle, draw, align=center, minimum height=8mm, text width=40mm},
+  dec/.style={diamond, draw, aspect=2.2, align=center, inner sep=1pt},
+  term/.style={rectangle, draw, rounded corners=3mm, align=center, minimum height=8mm, fill=gray!10},
+  arr/.style={-{Stealth}, thick}
+]
+\node[term] (start) {Bắt đầu: $low \leftarrow k_{\min}$, $high \leftarrow k_{\max}$};
+\coordinate[below=4mm of start] (merge);
+\node[dec, below=4mm of merge] (loop) {$low \le high$?};
+\node[term, right=8mm of loop, text width=26mm] (end) {Kiểm chứng,\\ trả về $(k^\ast, f^\ast)$};
+\node[proc, below=of loop] (solve) {$mid \leftarrow \lfloor (low + high)/2 \rfloor$\\ Sinh CNF $\Phi_{mid}$, gọi SAT solver};
+\node[dec, below=of solve] (sat) {SAT?};
+\node[proc, below left=of sat] (yes) {$k^\ast \leftarrow mid$, $f^\ast \leftarrow$ giải mã\\ $low \leftarrow mid + 1$};
+\node[proc, below right=of sat] (no) {$high \leftarrow mid - 1$};
+\draw[arr] (start) -- (loop);
+\draw[arr] (loop) -- node[above] {sai} (end);
+\draw[arr] (loop) -- node[right] {đúng} (solve);
+\draw[arr] (solve) -- (sat);
+\draw[arr] (sat) -| node[pos=0.25, above] {SAT} (yes);
+\draw[arr] (sat) -| node[pos=0.25, above] {UNSAT} (no);
+\draw[arr] (yes.west) -- ++(-6mm,0) |- (merge);
+\draw[arr] (no.east) -- ++(6mm,0) |- (merge);
+\end{tikzpicture}
+\caption{Sơ đồ khối thuật toán Binary Search tìm ngưỡng tối ưu $k^\ast = B_A(G)$.}
+\label{fig:binsearch}
+\end{figure}
+
+Khi vòng lặp kết thúc bình thường, ta có $high = low - 1 = k^\ast$, trong đó $\mathcal{P}(k^\ast)$ đúng (đã có nghiệm $f^\ast$ chứng minh) và $\mathcal{P}(k^\ast + 1)$ sai (đã được solver chứng minh UNSAT, hoặc $k^\ast = k_{\max}$). Do đó $k^\ast = B_A(G)$ là giá trị tối ưu chính xác.
+
+\paragraph{Phân tích số lần gọi solver.} Mỗi vòng lặp thu hẹp khoảng tìm kiếm còn khoảng một nửa, nên số lần gọi SAT solver không vượt quá $\lfloor \log_2 (k_{\max} - k_{\min} + 1) \rfloor + 1 = O(\log n)$. Để so sánh, hệ thống cũng cài đặt chiến lược \emph{tìm kiếm tuần tự} (Linear Search, \texttt{--method linear\_search}) duyệt $k$ giảm dần từ $k_{\max}$ và dừng tại giá trị SAT đầu tiên; chiến lược này cần $k_{\max} - B_A(G) + 1$ lần gọi solver, trong đó tất cả các lần gọi trừ lần cuối đều là UNSAT. Binary Search là chiến lược mặc định (\texttt{--method binary\_search}) và được sử dụng cho Direct Encoding trong thực nghiệm.
+
+\paragraph{Hạn chế khi có giới hạn thời gian.} Các ngưỡng $mid$ đầu tiên của Binary Search nằm ở giữa khoảng $[k_{\min}, k_{\max}]$, thường lớn hơn nhiều so với $B_A(G)$ trên đồ thị thưa. Các bài toán UNSAT tại những ngưỡng này có thể rất tốn kém. Nếu hết thời gian trước khi tìm được bất kỳ ngưỡng SAT nào, thuật toán chỉ còn cận dưới tầm thường $k^\ast = 1$ và chưa có phép gán nhãn nào. Nhược điểm này là động lực cho chiến lược Incremental Search ở mục tiếp theo.
 
 \subsection{Tìm kiếm tăng dần từ cận dưới (Incremental Search)}
-\todo{Tường: Chiến lược tìm kiếm tăng dần $k = 1, 2, \dots$ (\texttt{--method incremental}) kết hợp ghi nhận nghiệm tốt nhất theo thời gian thực (\texttt{on\_best\_found}) và tái sử dụng learned clauses, giúp giữ lại cận dưới $B(G)$ khả thi khi gặp timeout trên các đồ thị lớn.}
+\label{sec:incsearch}
+Chiến lược Incremental Search (\texttt{--method incremental}) duyệt các ngưỡng theo thứ tự tăng dần $k = k_{\min}, k_{\min} + 1, \dots$ và dừng ngay tại ngưỡng UNSAT đầu tiên. Sơ đồ khối được minh họa trên Hình~\ref{fig:incsearch}; các bước cụ thể như sau:
+
+\begin{enumerate}
+  \item \textbf{Khởi tạo:} $k \leftarrow k_{\min}$, $k^\ast \leftarrow k_{\min}$, $f^\ast \leftarrow \varnothing$.
+  \item \textbf{Lặp} trong khi $k \le k_{\max}$ và chưa hết thời gian:
+  \begin{enumerate}
+    \item Sinh công thức $\Phi_k$ và gọi SAT solver với thời gian còn lại.
+    \item Nếu kết quả là \textbf{SAT}: cập nhật $k^\ast \leftarrow k$, $f^\ast \leftarrow$ phép gán nhãn giải mã được; thông báo nghiệm tốt nhất mới qua callback \texttt{on\_best\_found}$(k^\ast, f^\ast, \text{số mệnh đề tích lũy})$; tăng $k \leftarrow k + 1$.
+    \item Nếu kết quả là \textbf{UNSAT}: dừng vòng lặp. Khi đó $\mathcal{P}(k)$ sai và $\mathcal{P}(k - 1)$ đúng, nên $k^\ast = k - 1 = B_A(G)$ là giá trị tối ưu.
+  \end{enumerate}
+  \item \textbf{Kiểm chứng} $f^\ast$ bằng \texttt{verify\_solution} và \textbf{trả về} $(k^\ast, f^\ast)$.
+\end{enumerate}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node distance=6mm and 10mm,
+  every node/.style={font=\small},
+  proc/.style={rectangle, draw, align=center, minimum height=8mm, text width=40mm},
+  dec/.style={diamond, draw, aspect=2.2, align=center, inner sep=1pt},
+  term/.style={rectangle, draw, rounded corners=3mm, align=center, minimum height=8mm, fill=gray!10},
+  arr/.style={-{Stealth}, thick}
+]
+\node[term] (start) {Bắt đầu: $k \leftarrow k_{\min}$};
+\coordinate[below=4mm of start] (merge);
+\node[dec, below=4mm of merge] (loop) {$k \le k_{\max}$ và\\ còn thời gian?};
+\node[term, right=8mm of loop, text width=26mm] (end) {Kiểm chứng,\\ trả về $(k^\ast, f^\ast)$};
+\node[proc, below=of loop] (solve) {Sinh CNF $\Phi_k$,\\ gọi SAT solver};
+\node[dec, below=of solve] (sat) {SAT?};
+\node[proc, below left=of sat] (yes) {$k^\ast \leftarrow k$, $f^\ast \leftarrow$ giải mã\\ gọi \texttt{on\_best\_found}\\ $k \leftarrow k + 1$};
+\node[proc, below right=of sat] (no) {Dừng: $k^\ast = k - 1$\\ là giá trị tối ưu};
+\draw[arr] (start) -- (loop);
+\draw[arr] (loop) -- node[above] {sai} (end);
+\draw[arr] (loop) -- node[right] {đúng} (solve);
+\draw[arr] (solve) -- (sat);
+\draw[arr] (sat) -| node[pos=0.25, above] {SAT} (yes);
+\draw[arr] (sat) -| node[pos=0.25, above] {UNSAT} (no);
+\draw[arr] (yes.west) -- ++(-6mm,0) |- (merge);
+\draw[arr] (no.east) -- ++(12mm,0) |- (end.east);
+\end{tikzpicture}
+\caption{Sơ đồ khối thuật toán Incremental Search tăng dần ngưỡng $k$ từ cận dưới.}
+\label{fig:incsearch}
+\end{figure}
+
+\paragraph{Tính chất ``anytime''.} Điểm mạnh cốt lõi của Incremental Search là cận dưới $k^\ast$ \emph{tăng đơn điệu} theo thời gian và luôn đi kèm một phép gán nhãn hợp lệ $f^\ast$. Nếu quá trình bị ngắt do hết thời gian ở ngưỡng $k$, hệ thống vẫn giữ được nghiệm khả thi tốt nhất $k^\ast = k - 1$ đã được kiểm chứng. Kết hợp với callback \texttt{on\_best\_found}, nghiệm này được đẩy ra ngoài ngay khi tìm thấy, nên cơ chế Hard Timeout đa tiến trình (Mục~5.2) có thể thu hồi tiến trình giải bất kỳ lúc nào mà không làm mất kết quả. Đây là lý do chiến lược này được sử dụng cho Staircase SCL Encoding trong thực nghiệm, đặc biệt trên các đồ thị khó như \texttt{can\_\_\_61}.
+
+\paragraph{Số lần gọi solver.} Khi không bị ngắt, Incremental Search thực hiện đúng $B_A(G)$ lần gọi SAT và một lần gọi UNSAT (trừ trường hợp $B_A(G) = k_{\max}$), tức $B_A(G) + 1$ lần gọi -- nhiều hơn Binary Search về số lượng. Tuy nhiên, các lần gọi SAT ở ngưỡng nhỏ thường được giải rất nhanh vì ràng buộc lỏng, và toàn bộ quá trình chỉ phải chứng minh UNSAT \emph{một lần duy nhất}, tại ngưỡng sát với giá trị tối ưu. Ngoài ra, với Direct Encoding số mệnh đề khoảng cách tăng theo $k$, nên các công thức ở ngưỡng nhỏ cũng có kích thước nhỏ hơn. Vì vậy, Incremental Search đặc biệt phù hợp với các đồ thị có $B_A(G)$ nhỏ so với $k_{\max}$.
+
+\paragraph{So sánh các chiến lược.} Bảng~\ref{tab:search-compare} tổng hợp đặc điểm của ba chiến lược tìm kiếm được hệ thống hỗ trợ.
+
+\begin{table}[ht]
+\centering
+\caption{So sánh các chiến lược tìm kiếm ngưỡng $k$ (với $B = B_A(G)$, $K = k_{\max} - k_{\min} + 1$).}
+\label{tab:search-compare}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Tiêu chí & Binary Search & Incremental Search & Linear Search \\
+\midrule
+Thứ tự duyệt $k$ & Chia đôi khoảng & Tăng dần từ $k_{\min}$ & Giảm dần từ $k_{\max}$ \\
+Số lần gọi solver & $\le \lfloor \log_2 K \rfloor + 1$ & $B + 1$ & $k_{\max} - B + 1$ \\
+Số lần gọi UNSAT & $O(\log K)$ & $1$ & $k_{\max} - B$ \\
+Cận dưới khi bị ngắt & Có thể chỉ là $1$ & Luôn là $k$ SAT gần nhất & Không có \\
+Phù hợp khi & $B$ ở giữa khoảng & $B$ nhỏ, có giới hạn thời gian & $B$ gần $k_{\max}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Hướng mở rộng: tái sử dụng mệnh đề học được.} Trong cài đặt hiện tại, mỗi ngưỡng $k$ được giải bằng một phiên bản solver mới với công thức $\Phi_k$ sinh lại từ đầu; cách làm này đơn giản và tương thích với các solver độc lập chỉ nhận tệp DIMACS. Do Incremental Search giải một dãy công thức có cấu trúc lồng nhau (ràng buộc khoảng cách của ngưỡng $k + 1$ chặt hơn ngưỡng $k$), có thể khai thác thêm cơ chế \emph{SAT gia tăng} của PySAT: nạp các mệnh đề chung một lần, gắn mỗi nhóm mệnh đề ``cấm khoảng cách đúng bằng $d$'' với một biến kích hoạt $s_d$, và kiểm tra ngưỡng $k$ bằng cách giải với tập giả định (assumptions) $\{s_1, \dots, s_{k-1}\}$. Khi đó các mệnh đề xung đột mà CDCL học được ở các ngưỡng trước vẫn là hệ quả đúng của công thức và có thể tái sử dụng cho các ngưỡng sau.
 
 %% ------------------------------------------------------------
 \section{Mô hình hóa bài toán (SAT \& CP-SAT)}
@@ -285,7 +504,7 @@ Khi giải các ma trận kích thước lớn hoặc mật độ phức tạp n
 \todo{Tường, Tùng, Lợi: The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.}
 
 \section*{Data availability}
-\todo{Tường: Toàn bộ mã nguồn, dữ liệu thực nghiệm và tài liệu hướng dẫn được công khai trên GitHub tại \url{https://github.com/LoiDoancode/Antibandwidth_Problem}.}
+Toàn bộ mã nguồn, dữ liệu thực nghiệm và tài liệu hướng dẫn của công trình được công khai trên GitHub tại \url{https://github.com/LoiDoancode/Antibandwidth_Problem}. Kho mã nguồn bao gồm: (i) các mô-đun nạp đồ thị (\texttt{src/graph\_loader.py}), mã hóa SAT (\texttt{src/sat\_encoder.py}, \texttt{src/scl\_encoder.py}), mô hình CP-SAT (\texttt{src/cp\_solver.py}), bộ điều phối tìm kiếm và kiểm chứng nghiệm (\texttt{src/solver.py}) và trực quan hóa (\texttt{src/visualizer.py}); (ii) giao diện dòng lệnh \texttt{main.py} và kịch bản đối chuẩn \texttt{benchmark.py} cùng các tệp kết quả \texttt{benchmark\_results.csv} và \texttt{benchmark\_results.md}; (iii) bộ kiểm thử tự động trong thư mục \texttt{tests/}; (iv) các đồ thị kiểm thử trong thư mục \texttt{data/instance/}, được thu thập từ tập Harwell--Boeing thuộc SuiteSparse Matrix Collection~\cite{harwellboeing}.
 
 %% ------------------------------------------------------------
 \appendix
@@ -294,17 +513,25 @@ Khi giải các ma trận kích thước lớn hoặc mật độ phức tạp n
 
 %% ------------------------------------------------------------
 \nocite{*}
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 \bibitem{truong2025}
-\todo{Tường: Trích dẫn bài báo Staircase Encoding cho Antibandwidth Problem (Truong, H. X., Van Kieu, T., \& Van To, K., ICAART 2025).}
+H.~X. Truong, T.~Van Kieu, K.~Van To, Sequential counter encoding for staircase at-most-one constraints, in: Proceedings of the 17th International Conference on Agents and Artificial Intelligence (ICAART 2025), Vol.~2, SciTePress, 2025, pp. 164--175.
 \bibitem{harwellboeing}
-\todo{Tường: Trích dẫn tập dữ liệu chuẩn Harwell--Boeing Matrix Collection.}
+I.~S. Duff, R.~G. Grimes, J.~G. Lewis, Sparse matrix test problems, ACM Transactions on Mathematical Software 15~(1) (1989) 1--14.
 \bibitem{ortools}
-\todo{Tường: Trích dẫn Google OR-Tools CP-SAT Solver.}
+L.~Perron, V.~Furnon, OR-Tools, Google, phiên bản 9.15, \url{https://developers.google.com/optimization/}.
 \bibitem{pysat}
-\todo{Tường: Trích dẫn thư viện PySAT.}
+A.~Ignatiev, A.~Morgado, J.~Marques-Silva, PySAT: A Python toolkit for prototyping with SAT oracles, in: Theory and Applications of Satisfiability Testing -- SAT 2018, Vol. 10929 of Lecture Notes in Computer Science, Springer, 2018, pp. 428--437.
 \bibitem{cnsplots}
-\todo{Tường: Trích dẫn thư viện trực quan hóa cnsplots.}
+cnsplots: Thư viện trực quan hóa dữ liệu khoa học, phiên bản 0.8.0, \url{https://cnsplots.farid.one/latest/}.
+\bibitem{leung1984}
+J.~Y.-T. Leung, O.~Vornberger, J.~D. Witthoff, On some variants of the bandwidth minimization problem, SIAM Journal on Computing 13~(3) (1984) 650--667.
+\bibitem{miller1989}
+Z.~Miller, D.~Pritikin, On the separation number of a graph, Networks 19~(6) (1989) 651--666.
+\bibitem{papadimitriou1976}
+C.~H. Papadimitriou, The NP-completeness of the bandwidth minimization problem, Computing 16 (1976) 263--270.
+\bibitem{raspaud2009}
+A.~Raspaud, H.~Schr\"{o}der, O.~S\'{y}kora, L.~T\"{o}r\"{o}k, I.~Vr\v{t}o, Antibandwidth and cyclic antibandwidth of meshes and hypercubes, Discrete Mathematics 309~(11) (2009) 3541--3552.
 \end{thebibliography}
 
 \end{document}
