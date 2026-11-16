@@ -66,19 +66,20 @@ Harwell--Boeing
 
 %% ------------------------------------------------------------
 \section{Ứng dụng thực tế}
-\todo{Tùng: Chương 2 (Tuần 1).}
+
+Bài toán Antibandwidth (ABP) không chỉ mang ý nghĩa lý thuyết trong lớp các bài toán dán nhãn đồ thị (graph labeling) mà còn là mô hình nền tảng cho nhiều bài toán kỹ thuật cần tối đa hóa khoảng cách tách biệt giữa các đối tượng xung đột.
 
 \subsection{Phân bổ tần số vô tuyến (Radio Frequency Assignment)}
-\todo{Tùng: Giãn cách tần số giữa các trạm phát sóng liền kề để giảm thiểu hiện tượng nhiễu giao thoa.}
+Trong mạng thông tin vô tuyến đa trạm, mỗi đỉnh $v \in V$ biểu diễn một trạm phát sóng và mỗi cạnh $(u, v) \in E$ biểu diễn cặp trạm nằm trong vùng phủ sóng giao thoa lẫn nhau. Các kênh tần số rời rạc được đánh số $\{1, 2, \dots, n\}$. Nếu gán cho hai trạm kề nhau các tần số quá gần, hiện tượng nhiễu kênh liền kề (adjacent-channel interference) sẽ làm suy giảm chất lượng tín hiệu. Khi mô hình hóa phép gán kênh thành song ánh $f: V \to \{1, \dots, n\}$, việc tối đa hóa $B_A(G) = \min_{(u,v) \in E} |f(u) - f(v)|$ đảm bảo độ giãn cách tần số nhỏ nhất giữa mọi cặp trạm có nguy cơ xung đột đạt giá trị lớn nhất có thể.
 
 \subsection{Giảm nhiễu xuyên âm trong thiết kế VLSI (Crosstalk Minimization)}
-\todo{Tùng: Tối ưu khoảng cách hình học giữa các đường mạch dẫn tín hiệu song song trong vi mạch tích hợp.}
+Trên vi mạch tích hợp mật độ cao (VLSI), các đường mạch dẫn tín hiệu song song hoặc các phần tử logic nối trực tiếp với nhau chịu ảnh hưởng mạnh của điện dung ký sinh và cảm ứng điện từ, gây ra nhiễu xuyên âm (crosstalk). Khi sắp xếp $n$ tuyến dây hoặc khối chức năng lên $n$ rãnh tuyến tính cách đều nhau, những cặp tuyến có tương tác mạnh (tạo thành cạnh trong đồ thị phụ thuộc) cần được đặt cách xa nhau về mặt hình học. Nghiệm tối ưu của ABP giúp cực đại hóa khoảng cách tối thiểu giữa các cặp dây nhạy cảm, qua đó giảm thiểu suy hao và sai lệch xung nhịp tín hiệu.
 
 \subsection{Lập lịch mạng cảm biến và kênh truyền}
-\todo{Tùng: Phân chia khe thời gian (time-slot) truyền thông nhằm tránh xung đột dữ liệu trong mạng không dây.}
+Trong mạng cảm biến không dây sử dụng cơ chế đa truy cập phân chia theo thời gian (TDMA) hoặc phân bổ khe truyền thông tuần tự, các nút lân cận trong đồ thị liên lạc dễ xảy ra va chạm gói tin hoặc nhiễu trễ lan truyền nếu được cấp các khe thời gian liền kề. Việc ánh xạ tập nút cảm biến vào dãy khe $\{1, \dots, n\}$ sao cho $|f(u) - f(v)| \ge k$ với mọi liên kết $(u, v) \in E$ giúp tạo vùng đệm thời gian an toàn giữa các phiên phát liên tiếp, nâng cao độ tin cậy truyền dữ liệu.
 
 \subsection{Bảo mật dữ liệu và định tuyến ẩn danh}
-\todo{Tùng: Phân tán vị trí lưu trữ và định tuyến mạng phân tán chống lại các tấn công phân tích luồng dữ liệu.}
+Trong lưu trữ phân tán và định tuyến mạng ẩn danh, các phần tử dữ liệu nhạy cảm hoặc các nút chuyển tiếp có liên hệ phụ thuộc (cạnh đồ thị) cần được phân tách trên trục chỉ số vật lý hoặc không gian địa chỉ tuyến tính. Mục tiêu cực đại hóa khoảng cách tối thiểu $B_A(G)$ làm giảm khả năng các khối liên quan bị đặt tập trung cục bộ trên cùng một vùng cụm, tăng chi phí cho các tấn công phân tích luồng dữ liệu và khai thác tương quan vị trí.
 
 %% ------------------------------------------------------------
 \section{Chuyển đổi bài toán tối ưu sang bài toán quyết định}
@@ -98,13 +99,46 @@ Harwell--Boeing
 
 %% ------------------------------------------------------------
 \section{Mô hình hóa bài toán (SAT \& CP-SAT)}
+\todo{Lợi: 4.3. Tường: 4.4 (Tuần 2).}
 \todo{Tùng: 4.1, 4.2, 4.4 và 4.5. Lợi: 4.3 (Tuần 2).}
 
 \subsection{Direct Encoding và hệ ràng buộc song ánh}
-\todo{Tùng: Ma trận biến Boolean $x_{i,p}$, các ràng buộc ALO/AMO cho đỉnh và vị trí, tích hợp CardEnc (Sequential Counter / Commander qua PySAT).}
+Mô hình mã hóa trực tiếp (Direct / Pairwise Encoding, cài đặt trong \texttt{src/sat\_encoder.py}) sử dụng ma trận biến Boolean $x_{v,p} \in \{0, 1\}$ cho mọi đỉnh $v \in \{0, \dots, n-1\}$ và vị trí $p \in \{1, \dots, n\}$, mang ý nghĩa:
+\[
+x_{v,p} = \text{True} \iff f(v) = p.
+\]
+Để truyền vào bộ giải SAT chuẩn DIMACS, mỗi cặp $(v, p)$ được ánh xạ thành chỉ số biến nguyên dương duy nhất thông qua hàm $\text{var}(v, p) = v \cdot n + p \in \{1, \dots, n^2\}$. Tập mệnh đề đảm bảo $f$ là một song ánh từ $V$ vào $\{1, \dots, n\}$ gồm ba nhóm ràng buộc:
+
+\begin{enumerate}
+    \item \textbf{Ràng buộc ít nhất một vị trí (At-Least-One -- ALO theo đỉnh):} Mỗi đỉnh $v$ phải được gán tối thiểu một vị trí:
+    \[
+    \bigvee_{p=1}^{n} x_{v,p} \quad (\forall v \in V),
+    \]
+    tạo thành $n$ mệnh đề có độ dài $n$.
+
+    \item \textbf{Ràng buộc nhiều nhất một vị trí (At-Most-One -- AMO theo đỉnh):} Mỗi đỉnh $v$ không được xuất hiện đồng thời tại hai vị trí khác nhau ($\sum_{p=1}^{n} x_{v,p} \le 1$).
+
+    \item \textbf{Ràng buộc nhiều nhất một đỉnh (AMO theo vị trí):} Mỗi vị trí $p$ chỉ chứa tối đa một đỉnh ($\sum_{v \in V} x_{v,p} \le 1$).
+\end{enumerate}
+
+\noindent\textbf{Cơ chế mã hóa AMO cơ bản và nâng cao:}
+Ở phương pháp \textit{Pairwise Encoding} truyền thống, mỗi ràng buộc $\text{AMO}(z_1, \dots, z_n)$ sinh ra tập mệnh đề nhị phân $\neg z_i \lor \neg z_j$ ($\forall 1 \le i < j \le n$), đòi hỏi $\binom{n}{2}$ mệnh đề trên mỗi đỉnh và mỗi vị trí, dẫn đến tổng số mệnh đề song ánh lên tới $n + 2n\binom{n}{2} = n^2(n-1) + n = \mathcal{O}(n^3)$ mà không dùng biến phụ.
+
+Để giảm bùng nổ số lượng mệnh đề trên đồ thị kích thước lớn, hệ thống hỗ trợ các bộ mã hóa AMO tuyến tính $\mathcal{O}(n)$ cho mỗi ràng buộc thông qua tham số \texttt{amo\_encoding} (tích hợp \texttt{pysat.card.CardEnc} và cài đặt trực tiếp trong \texttt{AntibandwidthSATEncoder}):
+\begin{itemize}
+    \item \textbf{Sequential Counter (\texttt{seqcounter}):} Áp dụng bộ đếm tuần tự Sinz qua \texttt{CardEnc.atmost(..., encoding=EncType.seqcounter)}. Với $n$ biến đầu vào, thuật toán sinh $n - 1$ biến phụ tích lũy $s_1, \dots, s_{n-1}$ và $3n - 4$ mệnh đề (khi $n \ge 2$), giữ tính chất \textit{arc consistency} qua lan truyền đơn vị và giảm tổng số mệnh đề song ánh từ $\mathcal{O}(n^3)$ xuống $\mathcal{O}(n^2)$.
+    \item \textbf{Commander Encoding (\texttt{commander}):} Phân hoạch $n$ biến thành các nhóm nhỏ kích thước tối đa $g = 3$, gắn cho mỗi nhóm có từ 2 biến trở lên một biến chỉ huy $c_r$ thỏa mãn $c_r \iff \bigvee_{z \in G_r} z$, sau đó áp dụng đệ quy AMO trên tập biến chỉ huy. Cách mã hóa này sử dụng ít biến phụ hơn Sequential Counter (xấp xỉ $n/2$ biến phụ cho mỗi ràng buộc) đồng thời vẫn duy trì độ phức tạp mệnh đề tuyến tính $\mathcal{O}(n)$ trên mỗi ràng buộc ($\mathcal{O}(n^2)$ toàn cục).
+    \item Ngoài ra, bộ mã hóa cũng hỗ trợ các biến thể khác từ \texttt{CardEnc} gồm \texttt{totalizer}, \texttt{ladder} và \texttt{bitwise} để phục vụ khảo sát đối chứng.
+\end{itemize}
 
 \subsection{Ràng buộc khoảng cách (Distance Clauses)}
-\todo{Tùng: Hệ mệnh đề xung đột khoảng cách $\neg x_{u,p} \lor \neg x_{v,q}$ với mọi $\{u,v\} \in E$ và $|p - q| < k$.}
+Với ngưỡng mục tiêu $k > 1$, điều kiện $|f(u) - f(v)| \ge k$ trên mọi cạnh $(u, v) \in E$ tương đương với việc cấm hai đỉnh kề nhau nhận các cặp vị trí $(p, q)$ có khoảng cách nhỏ hơn $k$:
+\[
+\neg x_{u,p} \lor \neg x_{v,q}, \quad \forall (u, v) \in E,\ \forall p \in \{1, \dots, n\},\ \forall q \in [\max(1, p - k + 1),\, \min(n, p + k - 1)] \setminus \{p\}.
+\]
+Khi $k \le 1$, hai đỉnh phân biệt luôn thỏa $|f(u) - f(v)| \ge 1$ nhờ ràng buộc AMO theo vị trí nên không cần sinh thêm mệnh đề khoảng cách. Đối với mỗi cạnh $(u, v)$ và giá trị $p$, số lượng vị trí $q$ bị cấm tối đa là $2(k - 1)$, do đó số mệnh đề khoảng cách bị chặn trên bởi $2|E| n (k - 1) = \mathcal{O}(|E| \cdot n \cdot k)$.
+
+Tổng hợp lại, đối với Direct Encoding kết hợp phá vỡ đối xứng ($\lfloor n/2 \rfloor$ mệnh đề đơn vị $\neg x_{v_0, p}$ cho $p > \lceil n/2 \rceil$), toàn bộ công thức CNF sử dụng $n^2$ biến chính (cộng thêm biến phụ nếu dùng \texttt{seqcounter}/\texttt{commander}) và có thể xuất trực tiếp sang định dạng DIMACS chuẩn thông qua phương thức \texttt{export\_dimacs}.
 
 \subsection{Kỹ thuật phá vỡ đối xứng (Symmetry Breaking)}
 \todo{Lợi: Ghim đỉnh có bậc lớn nhất $v_0$ vào nửa đầu dải vị trí $\neg x_{v_0, p}$ ($\forall p > \lceil n/2 \rceil$), chứng minh giảm 50\% không gian tìm kiếm.}
@@ -113,11 +147,31 @@ Harwell--Boeing
 \todo{Tùng: Mô hình mã hóa bậc thang (Staircase Encoding) theo Truong et al. \cite{truong2025}: mã hóa ràng buộc khoảng cách cạnh $\{u,v\} \in E$ bằng SCAMO theo cửa sổ trượt $w = k$ kết hợp khối AMO/AMZ trên từng đỉnh và kỹ thuật tách biến đỉnh, giảm số lượng mệnh đề xuống $\mathcal{O}(|V| \cdot n)$.}
 
 \subsection{Mô hình quy hoạch ràng buộc (Google OR-Tools CP-SAT)}
-\todo{Tùng: Biến miền nguyên IntVar $f(u) \in \{1, \dots, n\}$, ràng buộc AddAllDifferent và ràng buộc khoảng cách $|f(u) - f(v)| \ge k$.}
+Để làm mốc đối chứng chính xác cho các mô hình SAT thuần túy, hệ thống xây dựng bộ giải quy hoạch ràng buộc \texttt{AntibandwidthCPSolver} trong \texttt{src/cp\_solver.py} dựa trên động cơ giải \textbf{Google OR-Tools CP-SAT}. Khác với biểu diễn Boolean cỡ $\mathcal{O}(n^2)$ biến, mô hình CP-SAT biểu diễn trực tiếp mỗi đỉnh bằng một biến miền nguyên:
+\[
+\text{pos}_v \in \{1, 2, \dots, n\}, \quad \forall v \in V \quad (\text{khởi tạo qua } \texttt{NewIntVar}).
+\]
+Hệ ràng buộc của mô hình CP-SAT gồm các thành phần:
+\begin{enumerate}
+    \item \textbf{Ràng buộc song ánh toàn cục:} Sử dụng duy nhất một ràng buộc toàn cục \texttt{AddAllDifferent}$(\{\text{pos}_v \mid v \in V\})$, cho phép bộ giải kích hoạt thuật toán lọc miền giá trị trên đồ thị hai phía ngay trong nhân CP-SAT.
+    \item \textbf{Ràng buộc khoảng cách tuyệt đối:} Với mỗi cạnh $(u, v) \in E$, mô hình tạo hai biến nguyên phụ $\text{diff}_{uv} \in [-(n-1), n-1]$ và $\text{abs\_diff}_{uv} \in [0, n-1]$ thỏa mãn:
+    \[
+    \text{diff}_{uv} = \text{pos}_u - \text{pos}_v, \qquad \text{abs\_diff}_{uv} = |\text{diff}_{uv}| \quad (\texttt{AddAbsEquality}),
+    \]
+    rồi áp đặt $\text{abs\_diff}_{uv} \ge k$ (tổng cộng 3 ràng buộc cho mỗi cạnh).
+    \item \textbf{Phá vỡ đối xứng:} Nếu \texttt{break\_symmetry=True}, đỉnh neo $v_0 = \arg\max_{v \in V} \deg(v)$ bị giới hạn bởi ràng buộc $\text{pos}_{v_0} \le \lceil n / 2 \rceil$.
+\end{enumerate}
+
+Bộ giải CP-SAT hỗ trợ hai chiến lược giải (\texttt{solve(method=...)}):
+\begin{itemize}
+    \item \textbf{Tối ưu hóa trực tiếp (\texttt{direct\_optimize}):} Khai báo biến mục tiêu nguyên $k \in [1, \lfloor n/2 \rfloor]$, thay điều kiện cạnh bằng $\text{abs\_diff}_{uv} \ge k$ và gọi \texttt{Maximize}$(k)$ trong một lần chạy solver duy nhất (có giới hạn thời gian \texttt{time\_limit\_seconds} và đa luồng \texttt{num\_workers}).
+    \item \textbf{Tìm kiếm nhị phân (\texttt{binary\_search}):} Lặp qua các bài toán quyết định \texttt{check\_sat}$(k)$ trên miền $[1, \lfloor n/2 \rfloor]$ để đối chiếu trực tiếp từng bước với cơ chế tìm kiếm của SAT Solver.
+\end{itemize}
+Mọi nghiệm thu được đều được kiểm chứng lại bằng hàm \texttt{verify\_solution} độc lập nhằm bảo đảm tính hợp lệ của hoán vị và giá trị khoảng cách nhỏ nhất thực tế.
 
 %% ------------------------------------------------------------
 \section{Kết quả thực nghiệm}
-\todo{Lợi: Đặc tả dữ liệu, biểu đồ cnsplots, phân tích so sánh và đánh giá (Tuần 3). Tùng: Bảng số liệu thực nghiệm CP-SAT. Tường: Thu thập ma trận lớn.}
+\todo{Lợi: Đặc tả dữ liệu, biểu đồ cnsplots, phân tích so sánh và đánh giá (Tuần 3). Tường: Thu thập ma trận lớn.}
 
 \subsection{Đặc tả dữ liệu Harwell--Boeing}
 
@@ -169,6 +223,84 @@ Phân tích các đặc trưng cấu trúc ảnh hưởng sâu sắc đến đ�
 
 \subsection{Kết quả và so sánh}
 \todo{Lợi: Biểu đồ trực quan hóa bằng thư viện cnsplots (thời gian giải, số lượng clause, speedup) so sánh Direct Encoding (Pairwise, Commander, SeqCounter), Staircase SCL Encoding và CP-SAT (có thể kèm kết quả Order Encoding làm mốc tham khảo). Tùng: Tổng hợp bảng số liệu thực nghiệm SAT (Direct, SCL) vs. CP-SAT.}
+
+Bảng~\ref{tab:benchmark_sat_cpsat} tổng hợp kết quả thực nghiệm đối chuẩn chi tiết giữa hai phương pháp mã hóa SAT (\texttt{DIRECT}, \texttt{ORDER} trên các backend \texttt{glucose4} và \texttt{cadical153}) và mô hình quy hoạch ràng buộc \textbf{Google OR-Tools CP-SAT} trên 5 đồ thị chuẩn Harwell--Boeing có kích thước và mật độ khác nhau (từ $n=9$ tới $n=960$, giới hạn thời gian $100\text{s}$). Trong cấu hình Direct mặc định sử dụng Pairwise AMO, các đồ thị kích thước vừa ($n \le 39$) đều được giải tối ưu chính xác và vượt qua kiểm chứng \texttt{verify\_solution}; riêng trên ma trận lớn \texttt{nos3} ($n=960, m=7442$), mã hóa SAT Pairwise $\mathcal{O}(n^3)$ chạm ngưỡng tràn bộ nhớ (OOM với ước lượng $883{,}814{,}400$ mệnh đề), trong khi CP-SAT vẫn khởi tạo được mô hình với $22{,}328$ ràng buộc và trả về nghiệm khả thi hợp lệ trong giới hạn thời gian $100\text{s}$.
+
+\begin{table}[htbp]
+\centering
+\caption{Bảng đối chuẩn thực nghiệm giữa SAT (Direct, Order) và Google OR-Tools CP-SAT trên tập Harwell--Boeing}
+\label{tab:benchmark_sat_cpsat}
+\scriptsize
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Đồ thị} & \textbf{$|V|$ ($n$)} & \textbf{$|E|$ ($m$)} & \textbf{Mật độ} & \textbf{Cấu hình} & \textbf{$B^*(G)$} & \textbf{Thời gian (s)} & \textbf{Mệnh đề / Ràng buộc} \\
+\midrule
+\texttt{jgl009.txt} & 9 & 32 & 0.8889 & \texttt{DIRECT\_glucose4\_Sym} & 1 & 0.0065 & 3,839 \\
+ & & & & \texttt{DIRECT\_glucose4\_NoSym} & 1 & 0.0067 & 3,827 \\
+ & & & & \texttt{DIRECT\_cadical153\_Sym} & 1 & 0.0088 & 3,839 \\
+ & & & & \texttt{ORDER\_glucose4\_Sym} & 1 & 0.0073 & 3,788 \\
+ & & & & \texttt{ORDER\_cadical153\_Sym} & 1 & 0.0085 & 3,788 \\
+ & & & & \texttt{CPSAT\_Sym} & 1 & 0.0379 & 98 \\
+ & & & & \texttt{CPSAT\_NoSym} & 1 & 0.0287 & 97 \\
+\midrule
+\texttt{jgl011.txt} & 11 & 49 & 0.8909 & \texttt{DIRECT\_glucose4\_Sym} & 1 & 0.0194 & 7,990 \\
+ & & & & \texttt{DIRECT\_glucose4\_NoSym} & 1 & 0.0361 & 7,975 \\
+ & & & & \texttt{DIRECT\_cadical153\_Sym} & 1 & 0.0238 & 7,990 \\
+ & & & & \texttt{ORDER\_glucose4\_Sym} & 1 & 0.0177 & 7,897 \\
+ & & & & \texttt{ORDER\_cadical153\_Sym} & 1 & 0.0222 & 7,897 \\
+ & & & & \texttt{CPSAT\_Sym} & 1 & 0.0326 & 149 \\
+ & & & & \texttt{CPSAT\_NoSym} & 1 & 0.0450 & 148 \\
+\midrule
+\texttt{can\_\_\_24.txt} & 24 & 68 & 0.2464 & \texttt{DIRECT\_glucose4\_Sym} & 5 & 0.6334 & 134,420 \\
+ & & & & \texttt{DIRECT\_glucose4\_NoSym} & 5 & 1.2811 & 134,360 \\
+ & & & & \texttt{DIRECT\_cadical153\_Sym} & 5 & 1.1206 & 134,420 \\
+ & & & & \texttt{DIRECT\_cadical153\_NoSym} & 5 & 2.3157 & 134,360 \\
+ & & & & \texttt{ORDER\_glucose4\_Sym} & 5 & 0.3595 & 116,005 \\
+ & & & & \texttt{ORDER\_glucose4\_NoSym} & 5 & 0.4634 & 116,000 \\
+ & & & & \texttt{ORDER\_cadical153\_Sym} & 5 & 0.4737 & 116,005 \\
+ & & & & \texttt{CPSAT\_Sym} & 5 & 0.1623 & 206 \\
+ & & & & \texttt{CPSAT\_NoSym} & 5 & 0.2118 & 205 \\
+\midrule
+\texttt{bcspwr01.txt} & 39 & 46 & 0.0621 & \texttt{DIRECT\_glucose4\_Sym} & 17 & 4.5867 & 594,248 \\
+ & & & & \texttt{DIRECT\_glucose4\_NoSym} & 17 & 6.0422 & 594,134 \\
+ & & & & \texttt{DIRECT\_cadical153\_Sym} & 17 & 6.2642 & 594,248 \\
+ & & & & \texttt{DIRECT\_cadical153\_NoSym} & 17 & 5.7907 & 594,134 \\
+ & & & & \texttt{ORDER\_glucose4\_Sym} & 17 & 2.0779 & 442,142 \\
+ & & & & \texttt{ORDER\_glucose4\_NoSym} & 17 & 3.8730 & 442,136 \\
+ & & & & \texttt{ORDER\_cadical153\_Sym} & 17 & 3.0375 & 442,142 \\
+ & & & & \texttt{CPSAT\_Sym} & 17 & 0.5321 & 140 \\
+ & & & & \texttt{CPSAT\_NoSym} & 17 & 1.4638 & 139 \\
+\midrule
+\texttt{nos3} & 960 & 7442 & 0.0162 & \texttt{DIRECT\_* / ORDER\_*} (Pairwise) & OOM & 100.0000 & $\sim 883.8\text{M}$ \\
+ & & & & \texttt{CPSAT\_Sym} & 1$^\dagger$ & 100.2779 & 22,328 \\
+ & & & & \texttt{CPSAT\_NoSym} & 3$^\dagger$ & 100.2308 & 22,327 \\
+\bottomrule
+\end{tabular}
+\par\vspace{0.5ex}
+\raggedright\textit{Ghi chú:} Tất cả các ca không OOM đều đạt trạng thái kiểm chứng \texttt{PASSED}. $^\dagger$Trên \texttt{nos3}, CP-SAT đạt giới hạn thời gian $100\text{s}$ và trả về nghiệm khả thi tốt nhất tìm được trong thời gian cho phép.
+\end{table}
+
+Bên cạnh đó, Bảng~\ref{tab:amo_comparison} minh họa hiệu quả cắt giảm số mệnh đề song ánh của các kỹ thuật AMO nâng cao (\texttt{seqcounter} qua \texttt{CardEnc} và \texttt{commander}) so với \texttt{pairwise} trên một lần gọi \texttt{encode(k)} tại ngưỡng tối ưu $k^*$:
+
+\begin{table}[htbp]
+\centering
+\caption{So sánh số biến và số mệnh đề AMO trong Direct Encoding tại ngưỡng tối ưu $k^*$}
+\label{tab:amo_comparison}
+\small
+\begin{tabular}{lclrrrr}
+\toprule
+\textbf{Đồ thị} & \textbf{$k^*$} & \textbf{Mã hóa AMO} & \textbf{Tổng biến} & \textbf{Biến phụ} & \textbf{Mệnh đề AMO} & \textbf{Tổng mệnh đề} \\
+\midrule
+\texttt{can\_\_\_24.txt} & 5 & \texttt{pairwise} & 576 & 0 & 13,248 & 24,980 \\
+($n=24, m=68$) & 5 & \texttt{seqcounter} & 1,680 & 1,104 & 3,264 & 14,996 \\
+ & 5 & \texttt{commander} & 1,104 & 528 & 3,696 & 15,428 \\
+\midrule
+\texttt{bcspwr01.txt} & 17 & \texttt{pairwise} & 1,521 & 0 & 57,798 & 102,752 \\
+($n=39, m=46$) & 17 & \texttt{seqcounter} & 4,485 & 2,964 & 8,814 & 53,768 \\
+ & 17 & \texttt{commander} & 3,003 & 1,482 & 10,218 & 55,172 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Phân tích và đánh giá}
 \todo{Lợi: Phân tích ưu nhược điểm thực tế giữa SAT và CP-SAT theo mật độ đồ thị; đánh giá hiệu quả giảm số lượng mệnh đề và thời gian của Symmetry Breaking, Staircase SCL Encoding và Incremental Search.}
