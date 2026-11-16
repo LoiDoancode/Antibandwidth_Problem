@@ -42,19 +42,19 @@ class TestAntibandwidthSolver:
         assert result["optimal_k"] == 2
         assert result["verified"] is True
 
-    def test_direct_vs_order_encoding_consistency(self):
+    def test_direct_vs_scl_encoding_consistency(self):
         # Both encodings must yield the exact same optimal k for P_5
         G = nx.path_graph(5)
 
         s_direct = AntibandwidthSolver(G, encoding="direct", break_symmetry=True, verbose=False)
         res_direct = s_direct.solve()
 
-        s_order = AntibandwidthSolver(G, encoding="order", break_symmetry=True, verbose=False)
-        res_order = s_order.solve()
+        s_scl = AntibandwidthSolver(G, encoding="scl", break_symmetry=True, verbose=False)
+        res_scl = s_scl.solve(method="incremental")
 
-        assert res_direct["optimal_k"] == res_order["optimal_k"]
+        assert res_direct["optimal_k"] == res_scl["optimal_k"]
         assert res_direct["verified"] is True
-        assert res_order["verified"] is True
+        assert res_scl["verified"] is True
 
     def test_symmetry_breaking_consistency(self):
         # Symmetry breaking should prune search space without changing optimal k
@@ -93,4 +93,20 @@ class TestAntibandwidthSolver:
         is_valid, min_dist, err = solver.verify_solution(violating_labeling, expected_k=2)
         assert is_valid is False
         assert min_dist == 1
+
+    @pytest.mark.parametrize("amo_encoding", ["seqcounter", "commander", "totalizer", "ladder", "bitwise"])
+    def test_advanced_amo_encodings_solve_equivalently(self, amo_encoding):
+        # Path P_6 has optimal B*(P_6) = 3; Cycle C_5 has optimal B*(C_5) = 2
+        for graph, expected_k in [(nx.path_graph(6), 3), (nx.cycle_graph(5), 2)]:
+            solver = AntibandwidthSolver(
+                graph,
+                solver_name="cadical153",
+                encoding="direct",
+                amo_encoding=amo_encoding,
+                break_symmetry=True,
+                verbose=False,
+            )
+            res = solver.solve()
+            assert res["optimal_k"] == expected_k
+            assert res["verified"] is True
 
