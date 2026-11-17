@@ -2,7 +2,7 @@
 ## BÀI TẬP LỚN SỐ 2 - MÔN CÁC VẤN ĐỀ HIỆN ĐẠI KHMT (HK I 2026 - 2027)
 
 * **Topic 5:** Antibandwidth Problem (ABP)
-* **Thời lượng thực hiện:** 3 tuần
+* **Thời lượng thực hiện:** 3 tuần (02/11/2026 – 22/11/2026)
 * **Thành viên:** Tường, Tùng, Lợi
 * **Mục tiêu:** 
   1. Cài đặt các phương pháp mã hóa SAT: **Pairwise (Direct) Encoding** (kèm tối ưu ALO/AMO nâng cao `Commander`/`SeqCounter` qua PySAT) và **Staircase Sequential Counter (SCL) Encoding** (phân rã SCAMO theo đỉnh).
@@ -25,7 +25,7 @@
 
 ## 2. Kế Hoạch Chi Tiết Theo Từng Tuần (3 Tuần)
 
-### TUẦN 1: Thiết Lập Nền Tảng, Chuẩn Bị Dữ Liệu & Khung Báo Cáo Elsevier
+### TUẦN 1 (Thứ Hai 02/11/2026 – Chủ Nhật 08/11/2026): Thiết Lập Nền Tảng, Chuẩn Bị Dữ Liệu & Khung Báo Cáo Elsevier
 
 #### Nhiệm vụ Code:
 * **Tường:**
@@ -40,7 +40,7 @@
   * Viết pipeline xuất file DIMACS `.cnf` chuẩn và đọc kết quả (SAT/UNSAT + model values) từ solver độc lập.
   * Cài đặt và nghiên cứu API của thư viện bắt buộc **`cnsplots`**.
 
-#### Nhiệm vụ Báo cáo:
+#### Nhiệm vụ Báo cáo (Bắt đầu từ Thứ Hai, 02/11/2026 – Hạn: Chủ Nhật, 08/11/2026):
 * **Tường:** 
   * Tải và thiết lập khung bài báo khoa học chuẩn **Elsevier LaTeX Template** (`\documentclass[a4paper,fleqn]{cas-sc}`).
   * Hoàn thành bản thảo **Chương 1**: Tổng quan bài toán Antibandwidth, định nghĩa hình thức song ánh $f$, hàm mục tiêu $B_A(G)$, so sánh đối ngẫu với Bandwidth Problem.
@@ -52,7 +52,7 @@
 
 ---
 
-### TUẦN 2: Cài Đặt Thuật Toán Nâng Cao, Staircase SCL & CP-SAT
+### TUẦN 2 (Thứ Hai 09/11/2026 – Chủ Nhật 15/11/2026): Cài Đặt Thuật Toán Nâng Cao, Staircase SCL & CP-SAT
 
 #### Nhiệm vụ Code:
 * **Tường:**
@@ -68,7 +68,7 @@
   * Xây dựng pipeline tích hợp batch đa ma trận (`main.py`, `benchmark.py`), cơ chế **Hard Timeout đa tiến trình** (`multiprocessing.Process`), theo dõi nghiệm tốt nhất theo thời gian thực (`on_best_found`), hỗ trợ `--merge` / `--drop-graphs` và quy trình đo lường benchmark tự động.
   * Bổ sung cơ chế xuất đồ thị minh họa nghiệm bằng **`cnsplots`** (sơ đồ 1D Linear Arc Placement và cấu trúc đồ thị).
 
-#### Nhiệm vụ Báo cáo:
+#### Nhiệm vụ Báo cáo (Bắt đầu từ Thứ Hai, 09/11/2026 – Hạn: Chủ Nhật, 15/11/2026):
 * **Tường:** Viết **Chương 3** (Quy trình chuyển đổi bài toán Tối ưu sang bài toán Quyết định $ABP(G, k)$, sơ đồ khối Binary Search và Incremental Search).
 * **Tùng:** Viết **Chương 4.1, 4.2, 4.4 & 4.5**:
   * Chi tiết mô hình Direct Encoding, công thức hóa các ràng buộc ALO/AMO cải tiến (Sequential Counter / Commander).
@@ -83,7 +83,7 @@
 
 ---
 
-### TUẦN 3: Thực Nghiệm Quy Mô Lớn, Hoàn Thiện Báo Cáo & Thuyết Trình
+### TUẦN 3 (Thứ Hai 16/11/2026 – Chủ Nhật 22/11/2026): Thực Nghiệm Quy Mô Lớn, Hoàn Thiện Báo Cáo & Thuyết Trình
 
 #### Nhiệm vụ Code:
 * **Tường:**
@@ -96,7 +96,7 @@
   * Chạy benchmark toàn diện: **SAT Direct Encoding vs. SAT Staircase SCL vs. CP-SAT** với `cadical153`; bật/tắt **Symmetry Breaking**; so sánh chiến lược tìm kiếm (`binary` vs `incremental`).
   * Sử dụng thư viện bắt buộc **`cnsplots`** để vẽ các biểu đồ chất lượng cao (thời gian giải, số lượng mệnh đề, tỷ lệ tăng tốc speedup) đưa trực tiếp vào bài báo khoa học.
 
-#### Nhiệm vụ Báo cáo:
+#### Nhiệm vụ Báo cáo (Bắt đầu từ Thứ Hai, 16/11/2026 – Hạn: Chủ Nhật, 22/11/2026):
 * **Tường:** Hoàn thiện phần mở đầu, tóm tắt (Abstract), danh mục tài liệu tham khảo và mục **Data Availability** (link GitHub Repository lưu mã nguồn và dataset). Gom toàn bộ file LaTeX `cas-sc` và kiểm tra biên dịch không lỗi.
 * **Tùng:** Chèn các bảng số liệu thực nghiệm chi tiết giữa SAT và CP-SAT vào **Chương 5 (Kết quả thực nghiệm)**.
 * **Lợi:** Soạn phần **Phân tích và Thảo luận kết quả**:
@@ -117,20 +117,20 @@
 
 | Nội dung | Đầu ra mong đợi (Deliverables) | Người phụ trách chính | Deadline | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
-| **Parser & Large Data** | Module đọc file ma trận + Bộ dữ liệu ma trận lớn | Tường | Cuối Tuần 1 | ✅ Hoàn thành |
-| **SAT Encoder** | Module CNF Pairwise/Direct Encoding | Tùng | Cuối Tuần 1 | ✅ Hoàn thành |
-| **Solver Pipeline** | Pipeline SAT Solver (PySAT `cadical153` + Kissat) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
-| **Data Specification** | Đặc tả dữ liệu ma trận kiểm thử chuẩn (Báo cáo) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
-| **Slide Phác Thảo 3** | Nội dung Slide 11–15 (Nâng cao & Thực nghiệm) | Lợi | Cuối Tuần 1 | ✅ Hoàn thành |
-| **Symmetry Breaking** | Module cắt tỉa không gian đối xứng | Lợi | Giữa Tuần 2 | ✅ Hoàn thành (Vượt tiến độ) |
-| **CP-SAT Solver** | Mô hình giải chính xác bằng Google OR-Tools CP-SAT | Tùng | Cuối Tuần 2 | ✅ Hoàn thành |
-| **Advanced AMO/ALO** | Mã hóa CardEnc (Sequential Counter/Commander) | Tùng | Cuối Tuần 2 | ✅ Hoàn thành |
-| **Staircase SCL Encoding** | Mô hình mã hóa bậc thang `src/scl_encoder.py` (`--encoding scl`) | Tùng | Cuối Tuần 2 | ✅ Hoàn thành |
-| **Incremental Search & Hard Timeout** | Tìm kiếm tăng dần (`--method incremental`), `multiprocessing` timeout & `--merge` | Tường & Lợi | Cuối Tuần 2 | ✅ Hoàn thành |
-| **cnsplots Visualizer** | Module vẽ đồ thị nghiệm & biểu đồ benchmark | Lợi | Cuối Tuần 2 | ✅ Hoàn thành (Vượt tiến độ) |
-| **Draft Báo cáo 1** | Chương 1, 2 và khung Template Elsevier `cas-sc` | Tường & Tùng | Cuối Tuần 1 | ⏳ Chưa bắt đầu |
-| **Draft Báo cáo 2** | Chương 3 & Chương 4 (Direct + Staircase SCL + CP-SAT) | Cả 3 | Cuối Tuần 2 | ⏳ Chưa bắt đầu |
-| **Benchmark Suite** | Bảng số liệu 3 phương pháp (Direct, SCL, CP-SAT) trên ma trận lớn | Tùng & Lợi | Giữa Tuần 3 | ✅ Hoàn thành |
-| **Slide Báo cáo** | Hoàn thiện bộ slide thuyết trình | Cả 3 | Giữa Tuần 3 | ⏳ Chưa bắt đầu |
-| **Final Elsevier Paper** | Báo cáo hoàn chỉnh chuẩn `cas-sc` + link GitHub | Cả 3 (Tường gom) | Cuối Tuần 3 | ⏳ Chưa bắt đầu |
+| **Parser & Large Data** | Module đọc file ma trận + Bộ dữ liệu ma trận lớn | Tường | Cuối Tuần 1 (08/11) | ✅ Hoàn thành |
+| **SAT Encoder** | Module CNF Pairwise/Direct Encoding | Tùng | Cuối Tuần 1 (08/11) | ✅ Hoàn thành |
+| **Solver Pipeline** | Pipeline SAT Solver (PySAT `cadical153` + Kissat) | Lợi | Cuối Tuần 1 (08/11) | ✅ Hoàn thành |
+| **Data Specification** | Đặc tả dữ liệu ma trận kiểm thử chuẩn (Báo cáo) | Lợi | Cuối Tuần 1 (08/11) | ✅ Hoàn thành |
+| **Slide Phác Thảo 3** | Nội dung Slide 11–15 (Nâng cao & Thực nghiệm) | Lợi | Cuối Tuần 1 (08/11) | ✅ Hoàn thành |
+| **Symmetry Breaking** | Module cắt tỉa không gian đối xứng | Lợi | Giữa Tuần 2 (12/11) | ✅ Hoàn thành (Vượt tiến độ) |
+| **CP-SAT Solver** | Mô hình giải chính xác bằng Google OR-Tools CP-SAT | Tùng | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
+| **Advanced AMO/ALO** | Mã hóa CardEnc (Sequential Counter/Commander) | Tùng | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
+| **Staircase SCL Encoding** | Mô hình mã hóa bậc thang `src/scl_encoder.py` (`--encoding scl`) | Tùng | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
+| **Incremental Search & Hard Timeout** | Tìm kiếm tăng dần (`--method incremental`), `multiprocessing` timeout & `--merge` | Tường & Lợi | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
+| **cnsplots Visualizer** | Module vẽ đồ thị nghiệm & biểu đồ benchmark | Lợi | Cuối Tuần 2 (15/11) | ✅ Hoàn thành (Vượt tiến độ) |
+| **Draft Báo cáo 1** | Chương 1, 2 và khung Template Elsevier `cas-sc` | Tường & Tùng | Cuối Tuần 1 (08/11) | ⏳ Chưa bắt đầu |
+| **Draft Báo cáo 2** | Chương 3 & Chương 4 (Direct + Staircase SCL + CP-SAT) | Cả 3 | Cuối Tuần 2 (15/11) | 🔄 Đang thực hiện (Đã xong phần Lợi: 4.3 & 5.2) |
+| **Benchmark Suite** | Bảng số liệu 3 phương pháp (Direct, SCL, CP-SAT) trên ma trận lớn | Tùng & Lợi | Giữa Tuần 3 (19/11) | ✅ Hoàn thành |
+| **Slide Báo cáo** | Hoàn thiện bộ slide thuyết trình | Cả 3 | Giữa Tuần 3 (19/11) | ⏳ Chưa bắt đầu |
+| **Final Elsevier Paper** | Báo cáo hoàn chỉnh chuẩn `cas-sc` + link GitHub | Cả 3 (Tường gom) | Cuối Tuần 3 (22/11) | ⏳ Chưa bắt đầu |
 | **Rehearsal & Demo** | Thử thuyết trình khớp thời gian + Kịch bản Demo | Cả 3 | Trước ngày nộp | ⏳ Chưa bắt đầu |
