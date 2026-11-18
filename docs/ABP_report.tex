@@ -88,13 +88,22 @@ Harwell--Boeing
 \todo{Tường: Định nghĩa bài toán quyết định: kiểm tra sự tồn tại của song ánh $f$ sao cho $\forall \{u,v\} \in E, |f(u) - f(v)| \ge k$.}
 
 \subsection{Cận trên và cận dưới của $k$}
-\todo{Tường: Xác định chặn cận lý thuyết $k_{min} = 1$ và $k_{max} = \lfloor n/2 \rfloor$.}
+Để thu hẹp khoảng tìm kiếm của giá trị mục tiêu $k$ trước khi gọi bộ giải SAT hoặc CP-SAT, hệ thống triển khai bộ tính cận mức 1 (\texttt{src/bounds.py}) cho đồ thị đơn vô hướng $G = (V, E)$ với $|V| = n \ge 2$ và $|E| \ge 1$:
+\begin{itemize}
+    \item \textbf{Cận trên (Upper Bound -- $UB$):} Xét hai cận tổ hợp dựa trên bậc đỉnh:
+    \begin{enumerate}
+        \item \emph{Cận theo bậc lớn nhất $\Delta(G)$:} Một đỉnh $v$ có bậc $\Delta(G)$, ngay cả khi được đặt tại vị trí biên thuận lợi nhất ($1$ hoặc $n$), vẫn chỉ còn tối đa $n - k$ vị trí hợp lệ nằm ngoài khoảng cấm để chứa $\Delta(G)$ láng giềng. Do đó $n - k \ge \Delta(G)$, suy ra $UB_1 = n - \Delta(G)$.
+        \item \emph{Cận theo bậc nhỏ nhất $\delta(G)$ (khi $\delta(G) \ge 1$):} Đỉnh được gán vào vị trí trung tâm $p = \lceil n/2 \rceil$ có ít nhất $\delta(G)$ láng giềng và bị chặn khoảng cách ở cả hai phía, nên số vị trí khả dụng tối đa là $n + 1 - 2k \ge \delta(G)$, suy ra $UB_2 = \left\lfloor \frac{n + 1 - \delta(G)}{2} \right\rfloor$.
+    \end{enumerate}
+    Kết hợp lại, cận trên an toàn được xác định là $UB = \min(n - 1, UB_1, UB_2)$ (hoặc $\min(n - 1, UB_1)$ nếu đồ thị có đỉnh cô lập $\delta(G) = 0$).
+    \item \textbf{Cận dưới (Lower Bound -- $LB$) bằng thuật toán tham lam:} Hệ thống sắp xếp các đỉnh theo thứ tự bậc giảm dần, đặt đỉnh neo có bậc cao nhất tại vị trí $1$ (thỏa mãn điều kiện phá vỡ đối xứng $f(v_0) \le \lceil n/2 \rceil$), và lần lượt gán từng đỉnh còn lại vào vị trí trống giúp cực đại hóa khoảng cách nhỏ nhất tới các láng giềng đã đặt. Phép gán thu được luôn là một song ánh hợp lệ với khoảng cách nhỏ nhất $LB$, cho phép khởi tạo nghiệm dự phòng ngay từ đầu và thu hẹp miền tìm kiếm của SAT/CP-SAT về đoạn $[LB + 1, UB]$ (khi $LB = UB$, hệ thống kết luận tối ưu ngay mà không cần gọi bộ giải).
+\end{itemize}
 
 \subsection{Thuật toán Binary Search}
-\todo{Tường: Thiết kế và phân tích sơ đồ khối thuật toán tìm kiếm nhị phân giá trị $k$ tối ưu kết hợp SAT Solver.}
+\todo{Tường: Thiết kế và phân tích sơ đồ khối thuật toán tìm kiếm nhị phân giá trị $k$ tối ưu kết hợp SAT Solver trên khoảng $[LB + 1, UB]$.}
 
 \subsection{Tìm kiếm tăng dần từ cận dưới (Incremental Search)}
-\todo{Tường: Chiến lược tìm kiếm tăng dần $k = 1, 2, \dots$ (\texttt{--method incremental}) kết hợp ghi nhận nghiệm tốt nhất theo thời gian thực (\texttt{on\_best\_found}) và tái sử dụng learned clauses, giúp giữ lại cận dưới $B(G)$ khả thi khi gặp timeout trên các đồ thị lớn.}
+\todo{Tường: Chiến lược tìm kiếm tăng dần $k = LB + 1, LB + 2, \dots, UB$ (\texttt{--method incremental}) kết hợp ghi nhận nghiệm tốt nhất theo thời gian thực (\texttt{on\_best\_found}), giúp bỏ qua các ngưỡng $k \le LB$ và luôn bảo toàn cận dưới $B(G) \ge LB$ khả thi khi gặp timeout trên các đồ thị lớn.}
 
 %% ------------------------------------------------------------
 \section{Mô hình hóa bài toán (SAT \& CP-SAT)}
@@ -259,9 +268,9 @@ Toàn bộ các kịch bản kiểm thử và đối chuẩn hiệu năng (\text
 \subsubsection{Cơ chế Hard Timeout đa tiến trình và theo dõi nghiệm tăng dần}
 Khi giải các ma trận kích thước lớn hoặc mật độ phức tạp như \texttt{can\_\_\_61.txt} và \texttt{ash85.txt}, lời gọi giải CNF trong lõi C++ của SAT Solver có thể kéo dài vượt ngưỡng giới hạn mà cơ chế ngắt mềm (soft interrupt) không phản hồi tức thời. Để khắc phục, pipeline \texttt{benchmark.py} triển khai cơ chế \textbf{Hard Timeout đa tiến trình} kết hợp \textbf{Incremental Tracking}:
 \begin{itemize}
-    \item \textbf{Cô lập tiến trình (\texttt{multiprocessing.Process}):} Mỗi cấu hình SAT được chạy trong một tiến trình con độc lập (\texttt{\_worker\_run\_solver}) với ngưỡng giới hạn cứng \texttt{time\_limit = 300.0}~giây thông qua \texttt{proc.join(timeout=limit\_t)}. Nếu quá thời hạn mà tiến trình chưa kết thúc, tiến trình điều phối cưỡng chế thu hồi bằng \texttt{proc.terminate()}. Với các đồ thị rất lớn ($n > 100$) làm bùng nổ số mệnh đề vượt ngưỡng bộ nhớ/thời gian ở mô hình SAT, hệ thống tự động đánh dấu trạng thái \texttt{OOM} để tránh treo toàn bộ pipeline.
+    \item \textbf{Cô lập tiến trình (\texttt{multiprocessing.Process}):} Mỗi cấu hình SAT được chạy trong một tiến trình con độc lập (\texttt{\_worker\_run\_solver}) với ngưỡng giới hạn cứng \texttt{time\_limit = 1800.0}~giây thông qua \texttt{proc.join(timeout=limit\_t)}. Nếu quá thời hạn mà tiến trình chưa kết thúc, tiến trình điều phối cưỡng chế thu hồi bằng \texttt{proc.terminate()}. Với các đồ thị rất lớn ($n > 100$) làm bùng nổ số mệnh đề vượt ngưỡng bộ nhớ/thời gian ở mô hình Direct Encoding, hệ thống tự động đánh dấu trạng thái \texttt{OOM} để tránh treo toàn bộ pipeline (trong khi mô hình Staircase SCL và CP-SAT vẫn được tiến hành giải trong thời hạn cho phép).
     \item \textbf{Theo dõi nghiệm và số mệnh đề theo thời gian thực:} Tiến trình con đồng bộ tổng số mệnh đề sinh ra qua biến chia sẻ \texttt{multiprocessing.Value} (\texttt{shared\_clauses}, cập nhật qua callback \texttt{on\_clauses\_generated}) và liên tục đẩy nghiệm khả thi tốt nhất qua hàng đợi \texttt{multiprocessing.Queue} thông qua callback \texttt{on\_best\_found} (gói tin \texttt{PROGRESS} gồm \texttt{optimal\_k}, \texttt{labeling} và tổng số mệnh đề tích lũy).
-    \item \textbf{Tìm kiếm tăng dần kết hợp Hard Timeout:} Trong \texttt{benchmark.py}, chiến lược \texttt{binary\_search} được áp dụng cho Direct Encoding, còn \texttt{incremental} ($k = 1, 2, \dots$) được áp dụng cho Staircase SCL Encoding. Nhờ việc nâng dần cận dưới và ghi nhận nghiệm tốt nhất tức thời qua \texttt{on\_best\_found}, ngay cả khi gặp Hard Timeout ở ngưỡng $k$ lớn, hệ thống vẫn bảo toàn và kiểm chứng được cận dưới khả thi tốt nhất đạt được (\texttt{OK-FEASIBLE/TO}).
+    \item \textbf{Tìm kiếm tăng dần kết hợp Hard Timeout:} Trong \texttt{benchmark.py}, chiến lược \texttt{binary\_search} được áp dụng cho Direct Encoding, còn \texttt{incremental} ($k = LB + 1, \dots, UB$) được áp dụng cho Staircase SCL Encoding. Nhờ việc khởi tạo nghiệm khả thi từ cận dưới tham lam $LB$, nâng dần cận dưới và ghi nhận nghiệm tốt nhất tức thời qua \texttt{on\_best\_found}, ngay cả khi gặp Hard Timeout ở ngưỡng $k$ lớn, hệ thống vẫn bảo toàn và kiểm chứng được cận dưới khả thi tốt nhất đạt được (\texttt{OK-FEASIBLE/TO}).
 \end{itemize}
 
 \subsection{Kết quả và so sánh}

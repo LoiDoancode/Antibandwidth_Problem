@@ -15,6 +15,8 @@ import time
 from typing import Dict, List, Optional, Tuple, Any
 import networkx as nx
 
+from .bounds import compute_level1_bounds
+
 try:
     from ortools.sat.python import cp_model
     HAS_ORTOOLS = True
@@ -141,11 +143,12 @@ class AntibandwidthCPSolver:
 
         return True, min_dist, None
 
-    def solve(self, method: str = "direct_optimize") -> Dict[str, Any]:
+    def solve(self, method: str = "direct_optimize", use_bounds: bool = True) -> Dict[str, Any]:
         """Find the optimal Antibandwidth B*(G).
 
         Args:
             method: 'direct_optimize' (CP-SAT objective maximization) or 'binary_search'.
+            use_bounds: Use Level-1 LB (greedy) and UB (degree bounds) to narrow search.
 
         Returns:
             Dictionary containing:
@@ -178,20 +181,39 @@ class AntibandwidthCPSolver:
             }
 
         if method == "binary_search":
-            return self._solve_binary_search()
+            return self._solve_binary_search(use_bounds=use_bounds)
         else:
-            return self._solve_direct_optimize()
+            return self._solve_direct_optimize(use_bounds=use_bounds)
 
-    def _solve_direct_optimize(self) -> Dict[str, Any]:
+    def _solve_direct_optimize(self, use_bounds: bool = True) -> Dict[str, Any]:
         """Solve ABP via direct objective maximization in CP-SAT."""
         n = self.n
+        if use_bounds:
+            bounds = compute_level1_bounds(self.graph)
+            k_lower, k_upper = bounds["lb"], bounds["ub"]
+            lb_labeling = bounds["lb_labeling"]
+            if k_lower == k_upper:
+                verified, _, _ = self.verify_solution(lb_labeling, k_lower)
+                return {
+                    "optimal_k": k_lower,
+                    "labeling": lb_labeling,
+                    "total_time": 0.0,
+                    "iterations": [],
+                    "verified": verified,
+                    "lb": k_lower,
+                    "ub": k_upper,
+                }
+        else:
+            k_lower = 1
+            k_upper = n - 1 if n >= 2 else 1
+            lb_labeling = None
+
         model = cp_model.CpModel()
         pos_vars = {v: model.NewIntVar(1, n, f"pos_{v}") for v in self.graph.nodes()}
         model.AddAllDifferent(list(pos_vars.values()))
 
-        # Antibandwidth objective variable k in [1, floor(n / 2)]
-        k_upper = n // 2 if n >= 2 else 1
-        k_var = model.NewIntVar(1, k_upper, "k_antibandwidth")
+        # Antibandwidth objective variable k in [k_lower, k_upper]
+        k_var = model.NewIntVar(k_lower, k_upper, "k_antibandwidth")
 
         total_constraints = 1
         for u, v in self.graph.edges():
@@ -209,6 +231,11 @@ class AntibandwidthCPSolver:
 
         model.Maximize(k_var)
 
+        if lb_labeling is not None:
+            for v, pos in lb_labeling.items():
+                model.AddHint(pos_vars[v], pos)
+            model.AddHint(k_var, k_lower)
+
         solver = cp_model.CpSolver()
         if self.num_workers > 1:
             solver.parameters.num_workers = self.num_workers
@@ -224,6 +251,10 @@ class AntibandwidthCPSolver:
             best_k = int(solver.Value(k_var))
             labeling = {v: int(solver.Value(pos_vars[v])) for v in self.graph.nodes()}
             verified, min_dist, _ = self.verify_solution(labeling, best_k)
+        elif lb_labeling is not None:
+            best_k = k_lower
+            labeling = lb_labeling
+            verified, _, _ = self.verify_solution(labeling, best_k)
         else:
             best_k = 1
             labeling = {v: i + 1 for i, v in enumerate(self.graph.nodes())}
@@ -242,15 +273,29 @@ class AntibandwidthCPSolver:
             "total_time": elapsed,
             "iterations": iterations,
             "verified": verified,
+            "lb": k_lower,
+            "ub": k_upper,
         }
 
-    def _solve_binary_search(self) -> Dict[str, Any]:
+    def _solve_binary_search(self, use_bounds: bool = True) -> Dict[str, Any]:
         """Solve ABP via binary search over target k values."""
         n = self.n
-        low = 1
-        high = n // 2 if n >= 2 else 1
-        best_k = 1
-        best_labeling = None
+        if use_bounds:
+            bounds = compute_level1_bounds(self.graph)
+            lb = bounds["lb"]
+            ub = bounds["ub"]
+            low = lb + 1
+            high = ub
+            best_k = lb
+            best_labeling = bounds["lb_labeling"]
+        else:
+            lb = 1
+            ub = n - 1 if n >= 2 else 1
+            low = 1
+            high = ub
+            best_k = 1
+            best_labeling = None
+
         iterations = []
         total_start = time.perf_counter()
 
@@ -283,5 +328,7 @@ class AntibandwidthCPSolver:
             "total_time": total_elapsed,
             "iterations": iterations,
             "verified": verified,
+            "lb": lb,
+            "ub": ub,
         }
 
