@@ -14,6 +14,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Any
 from pathlib import Path
 import networkx as nx
 
+from .bounds import compute_level1_bounds
 from .sat_encoder import AntibandwidthSATEncoder
 from .scl_encoder import AntibandwidthSCLEncoder
 
@@ -213,11 +214,12 @@ class AntibandwidthSolver:
 
         return True, min_dist, None
 
-    def solve(self, method: str = "binary_search") -> Dict[str, Any]:
+    def solve(self, method: str = "binary_search", use_bounds: bool = True) -> Dict[str, Any]:
         """Find the optimal Antibandwidth B*(G).
 
         Args:
-            method: 'binary_search' or 'linear_search'.
+            method: 'binary_search', 'linear_search', or 'incremental'.
+            use_bounds: Use Level-1 LB (greedy) and UB (degree bounds) to narrow search.
 
         Returns:
             Dictionary containing:
@@ -250,14 +252,24 @@ class AntibandwidthSolver:
                 "verified": True,
             }
 
-        # Safe bounds:
-        # Lower bound: 1 (any connected graph with >= 1 edge has min distance >= 1)
-        # Upper bound: n - 1
-        low = 1
-        high = n - 1
+        if use_bounds:
+            bounds = compute_level1_bounds(self.graph)
+            lb = bounds["lb"]
+            ub = bounds["ub"]
+            best_k = lb
+            best_labeling = bounds["lb_labeling"]
+            low = lb + 1
+            high = ub
+            if self.on_best_found and best_labeling is not None:
+                self.on_best_found(best_k, best_labeling, 0)
+        else:
+            lb = 1
+            ub = n - 1
+            low = 1
+            high = n - 1
+            best_k = 1
+            best_labeling = None
 
-        best_k = 1
-        best_labeling = None
         iterations = []
         total_start = time.perf_counter()
 
@@ -265,7 +277,10 @@ class AntibandwidthSolver:
         if self.verbose:
             print(f"\n[ABP Solver] Nodes: {n}, Edges: {m}", flush=True)
             print(f"[ABP Solver] Encoding: {self.encoding.upper()}, Symmetry Breaking: {self.break_symmetry}", flush=True)
-            print(f"[ABP Solver] Search space: k in [{low}, {high}] using {method.upper()} with {solver_display}", flush=True)
+            if use_bounds:
+                print(f"[ABP Solver] Level-1 Bounds: LB={lb}, UB={ub} -> search k in [{low}, {high}] ({method.upper()}, {solver_display})", flush=True)
+            else:
+                print(f"[ABP Solver] Search space: k in [{low}, {high}] using {method.upper()} with {solver_display}", flush=True)
             print("-" * 65, flush=True)
             print(f"{'Target k':>10} | {'Status':>8} | {'Clauses':>10} | {'Time (s)':>10}", flush=True)
             print("-" * 65, flush=True)
@@ -410,6 +425,8 @@ class AntibandwidthSolver:
             "actual_min_dist": actual_min,
             "error": err,
             "timed_out": timed_out,
+            "lb": lb,
+            "ub": ub,
         }
 
     def solve_binary_search(self) -> Tuple[int, Optional[Dict[int, int]], float]:
