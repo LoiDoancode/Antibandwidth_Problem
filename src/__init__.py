@@ -1,5 +1,6 @@
 """Antibandwidth Problem Solver package."""
 
+from .bounds import compute_greedy_lower_bound, compute_level1_bounds, compute_upper_bound
 from .graph_loader import load_graph, GraphLoader, resolve_graph_path
 from .sat_encoder import AntibandwidthSATEncoder
 from .scl_encoder import AntibandwidthSCLEncoder
@@ -13,6 +14,9 @@ from .visualizer import (
 )
 
 __all__ = [
+    "compute_greedy_lower_bound",
+    "compute_level1_bounds",
+    "compute_upper_bound",
     "load_graph",
     "resolve_graph_path",
     "GraphLoader",

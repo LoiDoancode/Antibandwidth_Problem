@@ -5,14 +5,14 @@
 --------------------------------------------------------------------------------
 1. CHAY BENCHMARK TOAN BO CAC BO TEST DO THI (Xuat CSV, Markdown & 3 Bieu do)
 --------------------------------------------------------------------------------
-# Chay toan bo 5 do thi voi tat ca mo hinh (mac dinh timeout 300s):
+# Chay toan bo 5 do thi voi tat ca mo hinh (mac dinh timeout 1800s):
 python benchmark.py
 
-# Chay toan bo voi solver PySAT cu the (vi du Glucose4):
-python benchmark.py --solvers glucose4
+# Chay toan bo voi solver PySAT cu the (vi du cadical153):
+python benchmark.py --solvers cadical153
 
-# Chay toan bo voi thoi gian timeout tuy chinh (vi du 300s):
-python benchmark.py --time-limit 300
+# Chay toan bo voi thoi gian timeout tuy chinh (vi du 1800s):
+python benchmark.py --time-limit 1800
 
 # So sanh toan bo cac mo hinh chi tren 1 do thi duy nhat:
 python benchmark.py -i data/instance/harwell-boeing_v2/can___24.txt

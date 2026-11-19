@@ -17,7 +17,7 @@
 
 | Trụ cột | Tường | Tùng | Lợi |
 | :--- | :--- | :--- | :--- |
-| **1. Code & Thuật toán** | - Parser đồ thị Harwell-Boeing.<br>- Bổ sung tập dữ liệu ma trận lớn.<br>- Bộ kiểm tra tính hợp lệ của nghiệm (Verifier).<br>- Chiến lược tìm kiếm **Binary Search** & **Incremental Search** (tăng dần từ LB). | - Direct Encoding (Pairwise).<br>- Tối ưu ALO/AMO nâng cao (Sequential Counter / Commander qua PySAT `CardEnc`).<br>- Cài đặt **Staircase SCL Encoding** (`src/scl_encoder.py`).<br>- Xây dựng mô hình đối chuẩn **Google OR-Tools CP-SAT**. | - Pipeline SAT Solver (PySAT `cadical153` + Kissat) & **Hard Timeout đa tiến trình**.<br>- Kỹ thuật Phá vỡ đối xứng (Symmetry Breaking).<br>- Trực quan hóa đồ thị & biểu đồ bằng **`cnsplots`**.<br>- Pipeline benchmark (`--merge`, lưu nghiệm tốt nhất khi timeout). |
+| **1. Code & Thuật toán** | - Parser đồ thị Harwell-Boeing.<br>- Bổ sung tập dữ liệu ma trận lớn.<br>- Bộ kiểm tra tính hợp lệ của nghiệm (Verifier).<br>- Cài đặt **cận trên/dưới mức 1 (`src/bounds.py`)** & chiến lược tìm kiếm **Binary Search / Incremental Search** (bắt đầu từ `LB + 1` đến `UB`). | - Direct Encoding (Pairwise).<br>- Tối ưu ALO/AMO nâng cao (Sequential Counter / Commander qua PySAT `CardEnc`).<br>- Cài đặt **Staircase SCL Encoding** (`src/scl_encoder.py`).<br>- Xây dựng mô hình đối chuẩn **Google OR-Tools CP-SAT**. | - Pipeline SAT Solver (PySAT `cadical153` + Kissat) & **Hard Timeout đa tiến trình**.<br>- Kỹ thuật Phá vỡ đối xứng (Symmetry Breaking).<br>- Trực quan hóa đồ thị & biểu đồ bằng **`cnsplots`**.<br>- Pipeline benchmark (`--merge`, lưu nghiệm tốt nhất khi timeout). |
 | **2. Báo cáo (Report)** | - Khởi tạo Template Elsevier (`cas-sc`).<br>- Soạn Chương 1 & 2 (Tổng quan bài toán, ứng dụng thực tế).<br>- Soạn Chương 3 (Binary Search & Incremental Search).<br>- Biên tập mục **Data Availability**, Abstract & Tài liệu tham khảo (gồm Truong et al., 2025). | - Soạn Chương 4.1, 4.2, 4.4, 4.5:<br>  + Direct Encoding & ALO/AMO nâng cao.<br>  + **Staircase SCL Encoding** (SCAMO, khối AMO/AMZ, phân rã theo đỉnh).<br>  + Mô hình **CP-SAT** & bảng số liệu Chương 5. | - Soạn Chương 4.3 (Cơ chế Symmetry Breaking).<br>- Soạn Chương 5 (Phân tích so sánh thực nghiệm **Direct vs Staircase SCL vs CP-SAT** qua biểu đồ `cnsplots`, nhận xét ưu/nhược điểm & Kết luận). |
 | **3. Thuyết trình (Presentation)** | - Thiết kế Slide Phần 1 (Đặt vấn đề, mô hình hóa toán học, Binary Search & Incremental Search).<br>- Thuyết trình Mở đầu (Tuần 3). | - Thiết kế Slide Phần 2 (Direct Encoding, ALO/AMO nâng cao, **Staircase SCL Encoding**, mô hình CP-SAT).<br>- Thuyết trình Kỹ thuật (Tuần 3). | - Thiết kế Slide Phần 3 (Symmetry Breaking, kết quả so sánh **Direct vs SCL vs CP-SAT** qua biểu đồ `cnsplots`).<br>- Thuyết trình Kết luận & Demo chương trình. |
 
@@ -56,8 +56,8 @@
 
 #### Nhiệm vụ Code:
 * **Tường:**
-  * Cài đặt cơ chế kiểm soát chặn cận: cận trên lý thuyết $k_{max} = \lfloor n/2 \rfloor$, cận dưới $k_{min} = 1$.
-  * Tích hợp chiến lược tìm kiếm nhị phân (Binary Search), tìm kiếm tuần tự (Linear Search) và tìm kiếm tăng dần từ cận dưới (**Incremental Search**, `--method incremental`) qua các ngưỡng $k$.
+  * Cài đặt module tính cận mức 1 (`src/bounds.py`): cận trên toán học $UB = \min\big(n - \Delta(G),\; \lfloor (n + 1 - \delta(G)) / 2 \rfloor\big)$ (khi $\delta(G) \ge 1$) và cận dưới $LB$ kèm nghiệm khả thi ban đầu bằng thuật toán tham lam (Greedy); tích hợp mặc định (`use_bounds=True`) vào cả SAT Solver và CP-SAT (`AddHint` + thu hẹp miền `k_var`).
+  * Tích hợp chiến lược tìm kiếm nhị phân (Binary Search), tìm kiếm tuần tự (Linear Search) và tìm kiếm tăng dần từ cận dưới (**Incremental Search**, `--method incremental`) trong khoảng $[LB + 1, UB]$.
 * **Tùng:**
   * Cài đặt hệ mệnh đề ràng buộc khoảng cách Antibandwidth: $\neg x_{u,p} \lor \neg x_{v,q}$ ($\forall \{u,v\} \in E, |p - q| < k$).
   * **Nâng cao ALO/AMO (Khuyến khích trong đề bài):** Tích hợp kỹ thuật mã hóa hồng hào hơn (như *Sequential Counter* hoặc *Commander* thông qua `pysat.card.CardEnc`) nhằm giảm số lượng mệnh đề từ $O(n^2)$ xuống $O(n)$ trên các ma trận lớn.
@@ -127,6 +127,7 @@
 | **Advanced AMO/ALO** | Mã hóa CardEnc (Sequential Counter/Commander) | Tùng | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
 | **Staircase SCL Encoding** | Mô hình mã hóa bậc thang `src/scl_encoder.py` (`--encoding scl`) | Tùng | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
 | **Incremental Search & Hard Timeout** | Tìm kiếm tăng dần (`--method incremental`), `multiprocessing` timeout & `--merge` | Tường & Lợi | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
+| **Level-1 Bounds (LB & UB)** | Module `src/bounds.py` (UB theo $\Delta(G), \delta(G)$ + LB tham lam) tích hợp mặc định vào SAT & CP-SAT | Tường | Tuần 3 | ✅ Hoàn thành |
 | **cnsplots Visualizer** | Module vẽ đồ thị nghiệm & biểu đồ benchmark | Lợi | Cuối Tuần 2 (15/11) | ✅ Hoàn thành (Vượt tiến độ) |
 | **Draft Báo cáo 1** | Chương 1, 2 và khung Template Elsevier `cas-sc` | Tường & Tùng | Cuối Tuần 1 (08/11) | ⏳ Chưa bắt đầu |
 | **Draft Báo cáo 2** | Chương 3 & Chương 4 (Direct + Staircase SCL + CP-SAT) | Cả 3 | Cuối Tuần 2 (15/11) | 🔄 Đang thực hiện (Đã xong phần Lợi: 4.3 & 5.2) |

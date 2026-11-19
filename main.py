@@ -103,8 +103,8 @@ def parse_args():
     parser.add_argument(
         "--time-limit",
         type=float,
-        default=300.0,
-        help="Time limit in seconds for CP-SAT solver. Default: 300.0s",
+        default=1800.0,
+        help="Time limit in seconds for solvers. Default: 1800.0s",
     )
     parser.add_argument(
         "--visualize",
@@ -183,7 +183,7 @@ def main():
                 solver_inst = AntibandwidthCPSolver(
                     g,
                     break_symmetry=break_sym,
-                    time_limit_seconds=getattr(args, "time_limit", 300.0),
+                    time_limit_seconds=getattr(args, "time_limit", 1800.0),
                     verbose=False,
                 )
                 mth = "direct_optimize" if args.method == "direct_optimize" else "binary_search"
@@ -196,7 +196,7 @@ def main():
                     amo_encoding=args.amo_encoding,
                     break_symmetry=break_sym,
                     external_solver=args.external_solver,
-                    time_limit_seconds=getattr(args, "time_limit", 300.0),
+                    time_limit_seconds=getattr(args, "time_limit", 1800.0),
                     verbose=False,
                 )
                 res = solver_inst.solve(method=args.method)
@@ -281,7 +281,7 @@ def main():
             cp_solver = AntibandwidthCPSolver(
                 graph,
                 break_symmetry=break_sym,
-                time_limit_seconds=getattr(args, "time_limit", 300.0),
+                time_limit_seconds=getattr(args, "time_limit", 1800.0),
                 verbose=False,
             )
             is_sat, labeling, elapsed, n_clauses = cp_solver.check_sat(target_k)
@@ -327,7 +327,7 @@ def main():
         cp_solver = AntibandwidthCPSolver(
             graph,
             break_symmetry=break_sym,
-            time_limit_seconds=getattr(args, "time_limit", 300.0),
+            time_limit_seconds=getattr(args, "time_limit", 1800.0),
             verbose=True,
         )
         method = "direct_optimize" if args.method == "direct_optimize" else "binary_search"
@@ -340,7 +340,7 @@ def main():
             amo_encoding=args.amo_encoding,
             break_symmetry=break_sym,
             external_solver=args.external_solver,
-            time_limit_seconds=getattr(args, "time_limit", 300.0),
+            time_limit_seconds=getattr(args, "time_limit", 1800.0),
             verbose=True,
         )
         try:
