@@ -134,7 +134,7 @@ class AntibandwidthSolver:
                 for c in cnf.clauses:
                     tmp.write(" ".join(map(str, c)) + " 0\n")
 
-        is_sat = False
+        is_sat = None
         model = []
 
         try:
@@ -149,19 +149,49 @@ class AntibandwidthSolver:
             )
             output = proc.stdout
 
+            if proc.returncode not in (0, 10, 20):
+                diagnostic = proc.stderr.strip() or output.strip() or "no diagnostic output"
+                raise RuntimeError(
+                    f"External solver '{solver_cmd}' failed with exit code {proc.returncode}: {diagnostic}"
+                )
+
             for line in output.splitlines():
-                line = line.strip()
-                if line.startswith("s SATISFIABLE") or line == "SATISFIABLE":
-                    is_sat = True
-                elif line.startswith("s UNSATISFIABLE") or line == "UNSATISFIABLE":
-                    is_sat = False
-                elif line.startswith("v "):
-                    # Extract literal values from DIMACS output
-                    lits = [int(tok) for tok in line[2:].split() if tok != "0"]
-                    model.extend(lits)
+                parts = line.split()
+                if not parts:
+                    continue
+                status = None
+                if parts in (["s", "SATISFIABLE"], ["SATISFIABLE"]):
+                    status = True
+                elif parts in (["s", "UNSATISFIABLE"], ["UNSATISFIABLE"]):
+                    status = False
+                elif parts in (["s", "UNKNOWN"], ["UNKNOWN"]):
+                    raise RuntimeError(f"External solver '{solver_cmd}' returned UNKNOWN; no SAT/UNSAT conclusion is available.")
+                elif parts[0] == "v":
+                    try:
+                        lits = [int(tok) for tok in parts[1:]]
+                    except ValueError as exc:
+                        raise RuntimeError(f"External solver '{solver_cmd}' returned an invalid model: {line.strip()}") from exc
+                    model.extend(lit for lit in lits if lit != 0)
+
+                if status is not None:
+                    if is_sat is not None and is_sat != status:
+                        raise RuntimeError(f"External solver '{solver_cmd}' returned conflicting SAT/UNSAT statuses.")
+                    is_sat = status
+
+            if is_sat is None:
+                raise RuntimeError(f"External solver '{solver_cmd}' did not report a SATISFIABLE or UNSATISFIABLE status.")
+            expected_code = 10 if is_sat else 20
+            if proc.returncode not in (0, expected_code):
+                raise RuntimeError(
+                    f"External solver '{solver_cmd}' returned exit code {proc.returncode} inconsistent with its status."
+                )
+            if is_sat and getattr(cnf, "nv", self.n * self.n) > 0 and not model:
+                raise RuntimeError(f"External solver '{solver_cmd}' reported SATISFIABLE without a model.")
 
         except subprocess.TimeoutExpired:
             raise TimeoutError(f"External solver '{solver_cmd}' exceeded time limit ({time_limit:.2f}s)")
+        except OSError as exc:
+            raise RuntimeError(f"External solver '{solver_cmd}' could not be started: {exc}") from exc
         finally:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
@@ -229,6 +259,13 @@ class AntibandwidthSolver:
             - iterations: List of per-k search history
             - verified: Boolean verification result
         """
+        supported_methods = ("binary_search", "linear_search", "incremental")
+        if method not in supported_methods:
+            raise ValueError(
+                f"Unsupported search method '{method}'. "
+                f"Choose from: {', '.join(supported_methods)}"
+            )
+
         n = self.n
         m = self.graph.number_of_edges()
 

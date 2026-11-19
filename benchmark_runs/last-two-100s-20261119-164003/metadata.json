@@ -1,0 +1,42 @@
+{
+  "started_at": "2026-11-19T16:40:03.685697+07:00",
+  "command": [
+    "C:\\Users\\ADMIN\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-u",
+    "benchmark.py",
+    "--input",
+    "data/instance/harwell-boeing_v2/bcspwr01.txt",
+    "data/instance/harwell-boeing_v2/can___61.txt",
+    "--time-limit",
+    "100",
+    "--output-csv",
+    "D:\\Tai_Lieu\\Advanced Topics in CS\\Antibandwidth_Problem\\benchmark_runs\\last-two-100s-20261119-164003\\results.csv",
+    "--output-md",
+    "D:\\Tai_Lieu\\Advanced Topics in CS\\Antibandwidth_Problem\\benchmark_runs\\last-two-100s-20261119-164003\\results.md",
+    "--plot-time",
+    "D:\\Tai_Lieu\\Advanced Topics in CS\\Antibandwidth_Problem\\benchmark_runs\\last-two-100s-20261119-164003\\time_comparison.png",
+    "--plot-clauses",
+    "D:\\Tai_Lieu\\Advanced Topics in CS\\Antibandwidth_Problem\\benchmark_runs\\last-two-100s-20261119-164003\\clause_comparison.png",
+    "--plot-speedup",
+    "D:\\Tai_Lieu\\Advanced Topics in CS\\Antibandwidth_Problem\\benchmark_runs\\last-two-100s-20261119-164003\\speedup_comparison.png"
+  ],
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "logical_cpu_count": 12,
+  "time_limit_seconds_per_configuration": 100,
+  "source_sha256": {
+    "benchmark.py": "abf2eab106eb3ff8374793d5b6cd48e73e052d6d721e5560140e466b66181a65",
+    "src\\bounds.py": "823a0bc0c236232998b22e8efecc0ddf861c46c65bd06304c81deda57a6fb252",
+    "src\\cp_solver.py": "bde222bf690fcb568f3c0feefa885991d529d12469766fe96f844f52d37c3a71",
+    "src\\graph_loader.py": "712595e1c7921818b12167ca449d2057b596226d4d0f769be583fd133d1e9545",
+    "src\\sat_encoder.py": "4d64c83e127b3816e52883402b628d5148e7c758d9de7f4de9512540506f01a0",
+    "src\\scl_encoder.py": "946c5471c50d855c9331b68f177d16cd4286e09d511479fd952f8b1783289dd8",
+    "src\\solver.py": "e4d9015b5f28f53527190bdb3d356e5938a627ba6dab2df1427f74521e186954",
+    "src\\visualizer.py": "7020a40f3e81694e8c9d0cc9baf564ad916a49bbc3a561717d6038134d3fd68a",
+    "src\\__init__.py": "b187665ee3d236f60d98a945573aee4ede675ac6934adaa04d46789a64188a55"
+  },
+  "benchmark_pid": 21580,
+  "finished_at": "2026-11-19T17:00:06.308026+07:00",
+  "exit_code": 0
+}
