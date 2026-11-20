@@ -345,13 +345,13 @@ def run_benchmark():
 
                         print(f"    Running config [{cfg_name:28s}] ... ", end="", flush=True)
 
-                        if enc == "direct" and n > 100:
+                        if enc == "direct" and n >= 60:
                             if amo_enc == "pairwise":
                                 est_clauses = 2 * n * (n * (n - 1) // 2)
-                                oom_label = f"OOM (n={n} > 100: ~{est_clauses:,d} clauses exceed RAM) [SKIP]"
+                                oom_label = f"OOM (n={n} >= 60: ~{est_clauses:,d} clauses exceed RAM) [SKIP]"
                             else:
                                 est_clauses = 6 * n * n
-                                oom_label = f"OOM (n={n} > 100: ~{est_clauses:,d} clauses exceed SAT timeout) [SKIP]"
+                                oom_label = f"OOM (n={n} >= 60: ~{est_clauses:,d} clauses exceed SAT timeout) [SKIP]"
                             limit_t = getattr(args, "time_limit", 1800.0)
                             print(oom_label)
                             entry = {
