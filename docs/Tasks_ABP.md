@@ -129,9 +129,9 @@
 | **Incremental Search & Hard Timeout** | Tìm kiếm tăng dần (`--method incremental`), `multiprocessing` timeout & `--merge` | Tường & Lợi | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
 | **Level-1 Bounds (LB & UB)** | Module `src/bounds.py` (UB theo $\Delta(G), \delta(G)$ + LB tham lam) tích hợp mặc định vào SAT & CP-SAT | Tường | Tuần 3 | ✅ Hoàn thành |
 | **cnsplots Visualizer** | Module vẽ đồ thị nghiệm & biểu đồ benchmark | Lợi | Cuối Tuần 2 (15/11) | ✅ Hoàn thành (Vượt tiến độ) |
-| **Draft Báo cáo 1** | Chương 1, 2 và khung Template Elsevier `cas-sc` | Tường & Tùng | Cuối Tuần 1 (08/11) | ⏳ Chưa bắt đầu |
-| **Draft Báo cáo 2** | Chương 3 & Chương 4 (Direct + Staircase SCL + CP-SAT) | Cả 3 | Cuối Tuần 2 (15/11) | 🔄 Đang thực hiện (Đã xong phần Lợi: 4.3 & 5.2) |
+| **Draft Báo cáo 1** | Chương 1, 2 và khung Template Elsevier `cas-sc` | Tường & Tùng | Cuối Tuần 1 (08/11) | ✅ Hoàn thành |
+| **Draft Báo cáo 2** | Chương 3 & Chương 4 (Direct + Staircase SCL + CP-SAT) | Cả 3 | Cuối Tuần 2 (15/11) | ✅ Hoàn thành |
 | **Benchmark Suite** | Bảng số liệu 3 phương pháp (Direct, SCL, CP-SAT) trên ma trận lớn | Tùng & Lợi | Giữa Tuần 3 (19/11) | ✅ Hoàn thành |
 | **Slide Báo cáo** | Hoàn thiện bộ slide thuyết trình | Cả 3 | Giữa Tuần 3 (19/11) | ⏳ Chưa bắt đầu |
-| **Final Elsevier Paper** | Báo cáo hoàn chỉnh chuẩn `cas-sc` + link GitHub | Cả 3 (Tường gom) | Cuối Tuần 3 (22/11) | ⏳ Chưa bắt đầu |
+| **Final Elsevier Paper** | Báo cáo hoàn chỉnh chuẩn `cas-sc` + link GitHub | Cả 3 (Tường gom) | Cuối Tuần 3 (22/11) | ✅ Hoàn thành |
 | **Rehearsal & Demo** | Thử thuyết trình khớp thời gian + Kịch bản Demo | Cả 3 | Trước ngày nộp | ⏳ Chưa bắt đầu |

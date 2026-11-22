@@ -18,9 +18,6 @@
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\floatpagefraction}{0.75}
 
-% Ghi chú người phụ trách (xóa lệnh này và các dòng \todo khi viết xong)
-\newcommand{\todo}[1]{\par\noindent\textit{[#1]}\par}
-
 \begin{document}
 
 \let\WriteBookmarks\relax
@@ -511,7 +508,6 @@ Mọi nghiệm thu được đều được kiểm chứng lại bằng hàm \te
 
 %% ------------------------------------------------------------
 \section{Kết quả thực nghiệm}
-\todo{Tường: Thu thập ma trận lớn.}
 
 \subsection{Đặc tả dữ liệu Harwell--Boeing}
 
@@ -798,18 +794,93 @@ Toàn bộ mã nguồn, dữ liệu thực nghiệm chuẩn và tài liệu hư�
 
 %% ------------------------------------------------------------
 \section*{Credit authorship contribution statement}
-\todo{Tường: Conceptualization, Methodology, Software (Graph Loader, Incremental Search), Writing - Original Draft (Chương 1, 3), Supervision. Tùng: Software (Direct Encoding, Staircase SCL Encoding, CP-SAT), Writing - Original Draft (Chương 2, 4.1, 4.2, 4.4, 4.5), Investigation (Bảng số liệu thực nghiệm Chương 5). Lợi: Software (Solver Pipeline, Hard Timeout, Symmetry Breaking, cnsplots Visualizer), Writing - Original Draft (Chương 4.3, 5, 6), Writing - Review \& Editing.}
+\textbf{Nguyễn Xuân Tường:} Conceptualization, Methodology, Software (\texttt{src/graph\_loader.py}, \texttt{src/bounds.py}, Binary Search, Incremental Search, Solution Verifier), Data Curation, Writing -- Original Draft (Chương~1, Chương~3, Abstract, Data Availability, Phụ lục), Supervision. \textbf{Hoàng Lâm Tùng:} Methodology, Software (\texttt{src/sat\_encoder.py}, \texttt{src/scl\_encoder.py}, \texttt{src/cp\_solver.py}), Investigation, Writing -- Original Draft (Chương~2, Chương~4.1, 4.2, 4.4, 4.5, Bảng số liệu thực nghiệm Chương~5). \textbf{Doãn Duy Lợi:} Methodology, Software (\texttt{src/solver.py}, \texttt{src/visualizer.py}, \texttt{benchmark.py}, Symmetry Breaking, Hard Timeout Pipeline, \texttt{cnsplots} Visualization), Validation, Writing -- Original Draft (Chương~4.3, Chương~5, Chương~6), Writing -- Review \& Editing.
 
 \section*{Declaration of competing interest}
-\todo{Tường, Tùng, Lợi: The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.}
+Các tác giả tuyên bố không có bất kỳ xung đột lợi ích tài chính hoặc mối quan hệ cá nhân nào có thể ảnh hưởng đến tính khách quan của các kết quả nghiên cứu được trình bày trong báo cáo này (The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper).
 
 \section*{Data availability}
-Toàn bộ mã nguồn, dữ liệu thực nghiệm và tài liệu hướng dẫn của công trình được công khai trên GitHub tại \url{https://github.com/LoiDoancode/Antibandwidth_Problem}. Kho mã nguồn bao gồm: (i) các mô-đun nạp đồ thị (\texttt{src/graph\_loader.py}), mã hóa SAT (\texttt{src/sat\_encoder.py}, \texttt{src/scl\_encoder.py}), mô hình CP-SAT (\texttt{src/cp\_solver.py}), bộ điều phối tìm kiếm và kiểm chứng nghiệm (\texttt{src/solver.py}) và trực quan hóa (\texttt{src/visualizer.py}); (ii) giao diện dòng lệnh \texttt{main.py} và kịch bản đối chuẩn \texttt{benchmark.py} cùng các tệp kết quả \texttt{benchmark\_results.csv} và \texttt{benchmark\_results.md}; (iii) bộ kiểm thử tự động trong thư mục \texttt{tests/}; (iv) các đồ thị kiểm thử trong thư mục \texttt{data/instance/}, được thu thập từ tập Harwell--Boeing thuộc SuiteSparse Matrix Collection~\cite{harwellboeing}.
+Toàn bộ mã nguồn, dữ liệu thực nghiệm và tài liệu hướng dẫn của công trình được công khai trên GitHub tại \url{https://github.com/LoiDoancode/Antibandwidth_Problem}. Kho mã nguồn bao gồm: (i) các mô-đun nạp đồ thị (\texttt{src/graph\_loader.py}), tính cận mức 1 (\texttt{src/bounds.py}), mã hóa SAT (\texttt{src/sat\_encoder.py}, \texttt{src/scl\_encoder.py}), mô hình CP-SAT (\texttt{src/cp\_solver.py}), bộ điều phối tìm kiếm và kiểm chứng nghiệm (\texttt{src/solver.py}) và trực quan hóa (\texttt{src/visualizer.py}); (ii) giao diện dòng lệnh \texttt{main.py} và kịch bản đối chuẩn \texttt{benchmark.py} cùng các tệp kết quả \texttt{benchmark\_results.csv} và \texttt{benchmark\_results.md}; (iii) bộ kiểm thử tự động trong thư mục \texttt{tests/}; (iv) các đồ thị kiểm thử trong thư mục \texttt{data/instance/}, được thu thập từ tập Harwell--Boeing thuộc SuiteSparse Matrix Collection~\cite{harwellboeing}.
 
 %% ------------------------------------------------------------
 \appendix
 \section{Phụ lục}
-\todo{Tường, Tùng, Lợi: Bảng số liệu chi tiết toàn bộ các ca kiểm thử benchmark, mã lệnh tái lập kết quả và hướng dẫn sử dụng CLI.}
+\label{sec:appendix}
+
+\subsection{Bảng số liệu đối chuẩn trên nhóm đồ thị mở rộng quy mô lớn}
+Bên cạnh 6 đồ thị chuẩn cơ sở được trình bày tại Bảng~\ref{tab:benchmark_sat_cpsat}, Bảng~\ref{tab:appendix_large_graphs} thống kê chi tiết kết quả đối chuẩn giữa mô hình \textbf{Staircase SCL Encoding} (\texttt{cadical153}, chiến lược \texttt{incremental}) và \textbf{Google OR-Tools CP-SAT} (\texttt{direct\_optimize}, \texttt{num\_workers = 4}) trên 4 đồ thị mở rộng có quy mô lớn ($443 \le n \le 878$), với cả hai chế độ bật (\texttt{Sym}) và tắt (\texttt{NoSym}) phá vỡ đối xứng trong cùng cửa sổ thời gian đánh giá nhanh ($15\text{s}$). Trên toàn bộ các đồ thị này, các biến thể Direct Encoding đều vượt ngưỡng bộ nhớ (\texttt{OOM}) do bùng nổ tổ hợp $\mathcal{O}(m \cdot n \cdot k)$, trong khi Staircase SCL và CP-SAT vẫn duy trì khả năng sinh công thức và nâng dần cận dưới khả thi; toàn bộ nghiệm trả về đều vượt qua bước kiểm chứng độc lập \texttt{verify\_solution} (\texttt{PASSED}).
+
+\begin{table}[pos=htbp]
+\centering
+\caption{Kết quả đối chuẩn chi tiết giữa Staircase SCL Encoding và CP-SAT trên nhóm 4 đồ thị mở rộng quy mô lớn ($443 \le n \le 878$).}
+\label{tab:appendix_large_graphs}
+\scriptsize
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Đồ thị} & \textbf{$|V|$ ($n$)} & \textbf{$|E|$ ($m$)} & \textbf{Mật độ} & \textbf{Cấu hình} & \textbf{$B^*(G)$} & \textbf{Thời gian (s)} & \textbf{Mệnh đề / Ràng buộc} \\
+\midrule
+\texttt{bcspwr05} & 443 & 590 & 0.0060 & \texttt{SCL\_cadical153\_Sym} & 67$^\dagger$ & 15.0000 & 2,363,227 \\
+ & & & & \texttt{SCL\_cadical153\_NoSym} & 67$^\dagger$ & 15.0000 & 2,363,006 \\
+ & & & & \texttt{CPSAT\_Sym} & 149$^\dagger$ & 15.0430 & 1,772 \\
+ & & & & \texttt{CPSAT\_NoSym} & 145$^\dagger$ & 15.0675 & 1,771 \\
+\midrule
+\texttt{dwt\_\_503} & 503 & 2762 & 0.0219 & \texttt{SCL\_cadical153\_Sym} & 6$^\dagger$ & 15.0000 & 4,139,959 \\
+ & & & & \texttt{SCL\_cadical153\_NoSym} & 6$^\dagger$ & 15.0000 & 4,139,708 \\
+ & & & & \texttt{CPSAT\_Sym} & 42$^\dagger$ & 15.0520 & 8,288 \\
+ & & & & \texttt{CPSAT\_NoSym} & 42$^\dagger$ & 15.0468 & 8,287 \\
+\midrule
+\texttt{662\_bus} & 662 & 906 & 0.0041 & \texttt{SCL\_cadical153\_Sym} & 86$^\dagger$ & 15.0000 & 5,359,003 \\
+ & & & & \texttt{SCL\_cadical153\_NoSym} & 86$^\dagger$ & 15.0000 & 5,358,672 \\
+ & & & & \texttt{CPSAT\_Sym} & 141$^\dagger$ & 15.2252 & 2,720 \\
+ & & & & \texttt{CPSAT\_NoSym} & 140$^\dagger$ & 15.2048 & 2,719 \\
+\midrule
+\texttt{dwt\_\_878} & 878 & 3285 & 0.0085 & \texttt{SCL\_cadical153\_Sym} & 5$^\dagger$ & 15.0000 & 10,432,048 \\
+ & & & & \texttt{SCL\_cadical153\_NoSym} & 5$^\dagger$ & 15.0000 & 10,431,609 \\
+ & & & & \texttt{CPSAT\_Sym} & 46$^\dagger$ & 15.2756 & 9,857 \\
+ & & & & \texttt{CPSAT\_NoSym} & 41$^\dagger$ & 15.5165 & 9,856 \\
+\bottomrule
+\end{tabular}
+\par\vspace{0.5ex}
+\raggedright\textit{Ghi chú:} $^\dagger$Giá trị $B^*(G)$ là cận dưới khả thi tốt nhất tìm được khi đạt giới hạn thời gian và đều vượt qua hàm kiểm chứng độc lập \texttt{verify\_solution} (\texttt{PASSED}).
+\end{table}
+
+\subsection{Hướng dẫn sử dụng giao diện dòng lệnh (CLI) và tái lập thực nghiệm}
+Hệ thống cung cấp hai điểm vào dòng lệnh chính là \texttt{main.py} (giải đơn lẻ hoặc theo lô đồ thị, kiểm tra ngưỡng quyết định $k$, xuất tệp DIMACS và trực quan hóa nghiệm) và \texttt{benchmark.py} (chạy đối chuẩn tự động đa cấu hình với Hard Timeout đa tiến trình và xuất bảng kết quả kèm biểu đồ \texttt{cnsplots}).
+
+\paragraph{1. Cài đặt môi trường và chạy bộ kiểm thử tự động (\texttt{pytest}):}
+\begin{verbatim}
+pip install -r requirements.txt
+python -m pytest -v
+\end{verbatim}
+
+\paragraph{2. Giải bài toán trên từng đồ thị bằng \texttt{main.py}:}
+\begin{verbatim}
+# Giải bằng Staircase SCL Encoding kết hợp Incremental Search và CaDiCaL 1.5.3:
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt \
+    --encoding scl --method incremental --solver cadical153
+
+# Giải bằng Direct Encoding với các biến thể AMO (pairwise, commander, seqcounter):
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt \
+    --encoding direct --amo-encoding commander --method binary_search
+
+# Giải bằng mô hình quy hoạch ràng buộc Google OR-Tools CP-SAT:
+python main.py -i data/instance/harwell-boeing_v2/bcspwr01.txt --encoding cpsat
+
+# Kiểm tra bài toán quyết định ABP(G, k) tại một ngưỡng k cố định và xuất ảnh nghiệm:
+python main.py -i data/instance/harwell-boeing_v2/can___24.txt \
+    --encoding scl --check-k 5 --visualize docs/solution_can24.png
+\end{verbatim}
+
+\paragraph{3. Tái lập toàn bộ bảng số liệu và biểu đồ đối chuẩn bằng \texttt{benchmark.py}:}
+\begin{verbatim}
+# Chạy toàn bộ bộ đối chuẩn (Direct Pairwise/Commander/SeqCounter, SCL, CP-SAT, Sym/NoSym)
+# và tự động xuất benchmark_results.csv, benchmark_results.md cùng 3 biểu đồ cnsplots:
+python benchmark.py --solvers cadical153 --time-limit 1800
+
+# Chạy bổ sung trên đồ thị mới và gộp (--merge) vào bảng kết quả hiện có:
+python benchmark.py -i data/instance/harwell-boeing/big/dwt__503 \
+    --encodings scl cpsat --time-limit 15 --merge
+\end{verbatim}
 
 %% ------------------------------------------------------------
 \nocite{*}
@@ -832,6 +903,8 @@ Z.~Miller, D.~Pritikin, On the separation number of a graph, Networks 19~(6) (19
 C.~H. Papadimitriou, The NP-completeness of the bandwidth minimization problem, Computing 16 (1976) 263--270.
 \bibitem{raspaud2009}
 A.~Raspaud, H.~Schr\"{o}der, O.~S\'{y}kora, L.~T\"{o}r\"{o}k, I.~Vr\v{t}o, Antibandwidth and cyclic antibandwidth of meshes and hypercubes, Discrete Mathematics 309~(11) (2009) 3541--3552.
+\bibitem{hale1980}
+W.~K. Hale, Frequency assignment: Theory and applications, Proceedings of the IEEE 68~(12) (1980) 1497--1514.
 \end{thebibliography}
 
 \end{document}
