@@ -110,8 +110,8 @@ def parse_args():
     parser.add_argument(
         "--time-limit",
         type=float,
-        default=300.0,
-        help="Maximum solving time in seconds per CP-SAT configuration. Default: 300.0s",
+        default=1800.0,
+        help="Maximum solving time in seconds per configuration. Default: 1800.0s",
     )
     parser.add_argument(
         "--output-csv",
@@ -229,11 +229,12 @@ def run_benchmark():
     else:
         # Default to diverse curated suite of Harwell-Boeing instances
         default_suite = [
-            Path("data/instance/harwell-boeing_v2/jgl009.txt"),
             Path("data/instance/harwell-boeing_v2/jgl011.txt"),
             Path("data/instance/harwell-boeing_v2/can___24.txt"),
             Path("data/instance/harwell-boeing_v2/bcspwr01.txt"),
             Path("data/instance/harwell-boeing_v2/can___61.txt"),
+            Path("data/instance/harwell-boeing/small/bcspwr03"),
+            Path("data/instance/harwell-boeing/small/494_bus"),
         ]
         existing_defaults = [p for p in default_suite if p.exists()]
         if existing_defaults:
@@ -286,7 +287,7 @@ def run_benchmark():
                             graph=graph,
                             break_symmetry=sym,
                             verbose=False,
-                            time_limit_seconds=getattr(args, "time_limit", 300.0),
+                            time_limit_seconds=getattr(args, "time_limit", 1800.0),
                         )
                         res = cp_solver.solve(method="direct_optimize")
 
@@ -297,7 +298,7 @@ def run_benchmark():
 
                         print(f"B*(G)={k_opt} | Time={res['total_time']:.4f}s | Constraints={total_clauses:6d} [{status}]")
                     except Exception as e:
-                        limit_t = getattr(args, "time_limit", 300.0)
+                        limit_t = getattr(args, "time_limit", 1800.0)
                         print(f"ERROR: {e}")
                         total_clauses = 0
                         k_opt = "ERR"
@@ -344,14 +345,14 @@ def run_benchmark():
 
                         print(f"    Running config [{cfg_name:28s}] ... ", end="", flush=True)
 
-                        if n > 100:
+                        if enc == "direct" and n >= 60:
                             if amo_enc == "pairwise":
                                 est_clauses = 2 * n * (n * (n - 1) // 2)
-                                oom_label = f"OOM (n={n} > 100: ~{est_clauses:,d} clauses exceed RAM) [SKIP]"
+                                oom_label = f"OOM (n={n} >= 60: ~{est_clauses:,d} clauses exceed RAM) [SKIP]"
                             else:
                                 est_clauses = 6 * n * n
-                                oom_label = f"OOM (n={n} > 100: ~{est_clauses:,d} clauses exceed SAT timeout) [SKIP]"
-                            limit_t = getattr(args, "time_limit", 300.0)
+                                oom_label = f"OOM (n={n} >= 60: ~{est_clauses:,d} clauses exceed SAT timeout) [SKIP]"
+                            limit_t = getattr(args, "time_limit", 1800.0)
                             print(oom_label)
                             entry = {
                                 "graph": g_name,
@@ -370,7 +371,7 @@ def run_benchmark():
                             results.append(entry)
                             continue
 
-                        limit_t = getattr(args, "time_limit", 300.0)
+                        limit_t = getattr(args, "time_limit", 1800.0)
                         queue = mp.Queue()
                         shared_clauses = mp.Value("Q", 0)
                         proc = mp.Process(

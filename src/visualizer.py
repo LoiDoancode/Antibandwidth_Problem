@@ -552,6 +552,9 @@ def visualize_speedup_comparison(
         plt.Line2D([0], [0], color="red", linestyle="--", linewidth=1.5, label="Baseline (1.0x - No Gain)")
     ]
 
+    max_val = max(max(v) for v in matrix_val.values()) if matrix_val else 1.0
+    ax.set_ylim(0, max_val * 1.18)
+
     for i, lbl in enumerate(labels):
         offset = (i - len(labels) / 2 + 0.5) * bar_width
         vals = matrix_val[lbl]
@@ -570,9 +573,10 @@ def visualize_speedup_comparison(
         for bar, h, oom, bx in zip(bars, vals, ooms, x + offset):
             if oom:
                 bar.set_visible(False)
+                oom_y = max(0.08, 0.025 * max_val)
                 ax.text(
                     bx,
-                    0.05,
+                    oom_y,
                     "OOM",
                     ha="center",
                     va="bottom",
@@ -606,9 +610,6 @@ def visualize_speedup_comparison(
     )
     ax.legend(handles=legend_handles, frameon=True, shadow=True, bbox_to_anchor=(1.02, 1), loc="upper left", fontsize=8.5)
     ax.grid(True, axis="y", linestyle="--", alpha=0.6)
-
-    max_val = max(max(v) for v in matrix_val.values()) if matrix_val else 1.0
-    ax.set_ylim(0, max_val * 1.18)
 
     plt.tight_layout()
 
