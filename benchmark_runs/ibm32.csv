@@ -1,0 +1,11 @@
+graph,n,m,density,config,encoding,solver,symmetry,optimal_k,time,clauses,verified
+ibm32.txt,32,90,0.1815,DIRECT_PAIRWISE_cadical153_Sym,direct_pairwise,cadical153,True,9,8.213072800000191,230196,True
+ibm32.txt,32,90,0.1815,DIRECT_PAIRWISE_cadical153_NoSym,direct_pairwise,cadical153,False,9,10.910326000000168,230148,True
+ibm32.txt,32,90,0.1815,DIRECT_COMMANDER_cadical153_Sym,direct_commander,cadical153,True,9,4.294326700000056,155508,True
+ibm32.txt,32,90,0.1815,DIRECT_COMMANDER_cadical153_NoSym,direct_commander,cadical153,False,9,5.188997700000073,155460,True
+ibm32.txt,32,90,0.1815,DIRECT_SEQCOUNTER_cadical153_Sym,direct_seqcounter,cadical153,True,9,4.800896699999612,152628,True
+ibm32.txt,32,90,0.1815,DIRECT_SEQCOUNTER_cadical153_NoSym,direct_seqcounter,cadical153,False,9,15.483644100000674,152580,True
+ibm32.txt,32,90,0.1815,SCL_cadical153_Sym,scl,cadical153,True,9,1.0591936999999234,98180,True
+ibm32.txt,32,90,0.1815,SCL_cadical153_NoSym,scl,cadical153,False,9,1.148642000000109,98052,True
+ibm32.txt,32,90,0.1815,CPSAT_Sym,cpsat,cpsat,True,9,1.9294493000006696,272,True
+ibm32.txt,32,90,0.1815,CPSAT_NoSym,cpsat,cpsat,False,9,1.5829054999994696,271,True

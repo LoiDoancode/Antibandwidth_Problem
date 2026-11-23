@@ -119,7 +119,15 @@ def parse_args():
         action="store_true",
         help="Display the matplotlib interactive GUI plot window.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    is_cpsat = args.encoding == "cpsat" or args.solver == "cpsat"
+    if args.method == "direct_optimize" and not is_cpsat:
+        parser.error(
+            "--method direct_optimize is only supported by CP-SAT "
+            "(--encoding cpsat or --solver cpsat). "
+            "For SAT, choose binary_search, linear_search, or incremental."
+        )
+    return args
 
 
 def main():
@@ -199,7 +207,11 @@ def main():
                     time_limit_seconds=getattr(args, "time_limit", 1800.0),
                     verbose=False,
                 )
-                res = solver_inst.solve(method=args.method)
+                try:
+                    res = solver_inst.solve(method=args.method)
+                except RuntimeError as e:
+                    print(f"[Error] {e}")
+                    sys.exit(1)
 
             n_cls = sum(it.get("clauses", 0) for it in res.get("iterations", []))
             st = "PASSED" if res.get("verified", False) else "FAILED"
@@ -296,7 +308,11 @@ def main():
                 external_solver=args.external_solver,
                 verbose=False,
             )
-            is_sat, labeling, elapsed, n_clauses = solver.check_sat(target_k)
+            try:
+                is_sat, labeling, elapsed, n_clauses = solver.check_sat(target_k)
+            except RuntimeError as e:
+                print(f"[Error] {e}")
+                sys.exit(1)
             verifier_fn = solver.verify_solution
 
         try:
@@ -347,8 +363,9 @@ def main():
             results = solver.solve(method=args.method)
         except RuntimeError as e:
             print(f"[Error] {e}")
-            print("\nPlease install the required dependencies with:")
-            print("    pip install -r requirements.txt")
+            if not args.external_solver:
+                print("\nPlease install the required dependencies with:")
+                print("    pip install -r requirements.txt")
             sys.exit(1)
 
     opt_k = results["optimal_k"]

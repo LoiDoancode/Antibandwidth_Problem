@@ -1,0 +1,154 @@
+{
+  "exit_code": 0,
+  "rows": 20,
+  "wall_seconds": 1202.622,
+  "source_files_unchanged_during_run": true,
+  "explicit_feasible_timeout_rows": 9,
+  "verified_rows": 20,
+  "graphs": {
+    "bcspwr01.txt": [
+      {
+        "config": "DIRECT_PAIRWISE_cadical153_Sym",
+        "k": 17,
+        "seconds": 4.8792,
+        "run_status": "OK",
+        "previous_k": "17"
+      },
+      {
+        "config": "DIRECT_PAIRWISE_cadical153_NoSym",
+        "k": 17,
+        "seconds": 4.5453,
+        "run_status": "OK",
+        "previous_k": "17"
+      },
+      {
+        "config": "DIRECT_COMMANDER_cadical153_Sym",
+        "k": 17,
+        "seconds": 5.1538,
+        "run_status": "OK",
+        "previous_k": "17"
+      },
+      {
+        "config": "DIRECT_COMMANDER_cadical153_NoSym",
+        "k": 17,
+        "seconds": 11.8736,
+        "run_status": "OK",
+        "previous_k": "17"
+      },
+      {
+        "config": "DIRECT_SEQCOUNTER_cadical153_Sym",
+        "k": 17,
+        "seconds": 6.3454,
+        "run_status": "OK",
+        "previous_k": "17"
+      },
+      {
+        "config": "DIRECT_SEQCOUNTER_cadical153_NoSym",
+        "k": 15,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "17"
+      },
+      {
+        "config": "SCL_cadical153_Sym",
+        "k": 17,
+        "seconds": 5.54,
+        "run_status": "OK",
+        "previous_k": "17"
+      },
+      {
+        "config": "SCL_cadical153_NoSym",
+        "k": 17,
+        "seconds": 13.8503,
+        "run_status": "OK",
+        "previous_k": "17"
+      },
+      {
+        "config": "CPSAT_Sym",
+        "k": 17,
+        "seconds": 3.4092,
+        "run_status": "OK",
+        "previous_k": "17"
+      },
+      {
+        "config": "CPSAT_NoSym",
+        "k": 17,
+        "seconds": 2.985,
+        "run_status": "OK",
+        "previous_k": "17"
+      }
+    ],
+    "can___61.txt": [
+      {
+        "config": "DIRECT_PAIRWISE_cadical153_Sym",
+        "k": 9,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "7"
+      },
+      {
+        "config": "DIRECT_PAIRWISE_cadical153_NoSym",
+        "k": 9,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "7"
+      },
+      {
+        "config": "DIRECT_COMMANDER_cadical153_Sym",
+        "k": 9,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "7"
+      },
+      {
+        "config": "DIRECT_COMMANDER_cadical153_NoSym",
+        "k": 9,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "7"
+      },
+      {
+        "config": "DIRECT_SEQCOUNTER_cadical153_Sym",
+        "k": 9,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "7"
+      },
+      {
+        "config": "DIRECT_SEQCOUNTER_cadical153_NoSym",
+        "k": 9,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "7"
+      },
+      {
+        "config": "SCL_cadical153_Sym",
+        "k": 9,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "9"
+      },
+      {
+        "config": "SCL_cadical153_NoSym",
+        "k": 9,
+        "seconds": 100.0,
+        "run_status": "OK-FEASIBLE/TO",
+        "previous_k": "9"
+      },
+      {
+        "config": "CPSAT_Sym",
+        "k": 9,
+        "seconds": 100.0365,
+        "run_status": "OK",
+        "previous_k": "9"
+      },
+      {
+        "config": "CPSAT_NoSym",
+        "k": 8,
+        "seconds": 100.0656,
+        "run_status": "OK",
+        "previous_k": "9"
+      }
+    ]
+  }
+}
